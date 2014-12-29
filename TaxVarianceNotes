@@ -1,0 +1,147 @@
+library(vegan)
+
+### Load the test data
+data(dune)
+
+data(dune.taxon)
+
+### Run through the example
+taxdis <- taxa2dist(dune.taxon, varstep=TRUE)
+taxontree <- hclust(taxa2dist(dune.taxon))
+plot(taxontree)
+
+mod <- taxondive(dune, taxdis)
+summary(mod)
+
+
+### Try it with our data (well a test set) and see the problem!
+
+taxon.test = read.table("~/Phylodisttest.txt", header=TRUE, row.names="row.names", sep ="\t")
+fix(taxon.test)
+#taxon.test = taxon.test[,-5]
+taxontree <- hclust(taxa2dist(taxon.test, varstep=TRUE))
+plot(taxontree, las =1)
+taxontree2 <- hclust(taxa2dist(taxon.test))
+x11()
+plot(taxontree2, las =1)
+taxontree3 <- hclust(taxa2dist(taxon.test, check=TRUE))
+x11()
+plot(taxontree3)
+taxontree4 <- hclust(taxa2dist(taxon.test, varstep=TRUE, check=TRUE))
+x11()
+plot(taxontree4)
+
+### Actual Functions:
+
+### Calc distances
+
+function (x, varstep = FALSE, check = TRUE, labels) 
+{
+    rich <- apply(x, 2, function(taxa) length(unique(taxa)))
+    S <- nrow(x)
+    if (check) {
+        keep <- rich < S & rich > 1
+        rich <- rich[keep]
+        x <- x[, keep]
+    }
+    i <- rev(order(rich))
+    x <- x[, i]
+    rich <- rich[i]
+    if (varstep) {
+        add <- -diff(c(nrow(x), rich, 1))
+        add <- add/c(S, rich)
+        add <- add/sum(add) * 100
+    }
+    else {
+        add <- rep(100/(ncol(x) + check), ncol(x) + check)
+    }
+    if (!is.null(names(add))) 
+        names(add) <- c("Base", names(add)[-length(add)])
+    if (!check) 
+        add <- c(0, add)
+    out <- matrix(add[1], nrow(x), nrow(x))
+    for (i in 1:ncol(x)) {
+        out <- out + add[i + 1] * outer(x[, i], x[, i], "!=")
+    }
+    out <- as.dist(out)
+    attr(out, "method") <- "taxa2dist"
+    attr(out, "steps") <- add
+    if (missing(labels)) {
+        attr(out, "Labels") <- rownames(x)
+    }
+    else {
+        if (length(labels) != nrow(x)) 
+            warning("Labels are wrong: needed ", nrow(x), " got ", 
+                length(labels))
+        attr(out, "Labels") <- as.character(labels)
+    }
+    if (!check && any(out <= 0)) 
+        warning("you used 'check=FALSE' and some distances are zero -- was this intended?")
+    out
+}
+<environment: namespace:vegan>
+
+
+### Calc the actual delta etc
+
+function (comm, dis, match.force = FALSE) 
+{
+    binary <- FALSE
+    comm <- as.matrix(comm)
+    if (missing(dis)) {
+        n <- ncol(comm)
+        dis <- structure(rep(1, n * (n - 1)/2), Size = n, class = "dist")
+    }
+    dis <- as.dist(dis)
+    if (match.force || attr(dis, "Size") != ncol(comm)) {
+        if (match.force) 
+            message("Forced matching 'dis' labels and 'comm' names")
+        else message("Dimensions do not match between 'comm' and 'dis'")
+        if (all(colnames(comm) %in% labels(dis))) {
+            dis <- as.matrix(dis)
+            dis <- as.dist(dis[colnames(comm), colnames(comm)])
+            message("Matched 'dis' labels by 'comm' names")
+        }
+        else {
+            stop("Could not match names in 'dis' and 'comm'")
+        }
+        if (length(unique(colnames(comm))) != ncol(comm)) 
+            stop("Names not in unique in 'comm': match wrong")
+        if (length(unique(labels(dis))) != attr(dis, "Size")) 
+            warning("Labels not unique in 'dis': matching probably wrong")
+    }
+    del <- dstar <- dplus <- Ed <- Edstar <- edplus <- NULL
+    if (!binary) {
+        del <- apply(comm, 1, function(x) sum(as.dist(outer(x, 
+            x)) * dis))
+        dstar <- apply(comm, 1, function(x) sum(dis * (xx <- as.dist(outer(x, 
+            x))))/sum(xx))
+        rs <- rowSums(comm)
+        del <- del/rs/(rs - 1) * 2
+        cs <- colSums(comm)
+        tmp <- sum(as.dist(outer(cs, cs)) * dis)
+        Ed <- tmp/sum(cs)/sum(cs - 1) * 2
+        Edstar <- tmp/sum(cs)/(sum(cs) - 1) * 2
+    }
+    comm <- ifelse(comm > 0, 1, 0)
+    dplus <- apply(comm, 1, function(x) sum(as.dist(outer(x, 
+        x)) * dis))
+    Lambda <- apply(comm, 1, function(x) sum(as.dist(outer(x, 
+        x)) * dis^2))
+    m <- rowSums(comm)
+    dplus <- dplus/m/(m - 1) * 2
+    Lambda <- Lambda/m/(m - 1) * 2 - dplus^2
+    S <- attr(dis, "Size")
+    omebar <- sum(dis)/S/(S - 1) * 2
+    varome <- sum(dis^2)/S/(S - 1) * 2 - omebar^2
+    omei <- rowSums(as.matrix(dis))/(S - 1)
+    varomebar <- sum(omei^2)/S - omebar^2
+    vardplus <- 2 * (S - m)/(m * (m - 1) * (S - 2) * (S - 3)) * 
+        ((S - m - 1) * varome + 2 * (S - 1) * (m - 2) * varomebar)
+    out <- list(Species = m, D = del, Dstar = dstar, Lambda = Lambda, 
+        Dplus = dplus, sd.Dplus = sqrt(vardplus), SDplus = m * 
+            dplus, ED = Ed, EDstar = Edstar, EDplus = omebar)
+    class(out) <- "taxondive"
+    out
+}
+<environment: namespace:vegan>
