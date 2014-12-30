@@ -1,17 +1,8 @@
----
-title: "Taxonomic Variance Notes"
-author: "Niels Hanson, Aria Hahn"
-date: "December 29, 2014"
-output:
-  html_document:
-    keep_md: yes
-    theme: readable
----
+# Taxonomic Variance Notes
+Niels Hanson, Aria Hahn  
+December 29, 2014  
 
-```{r echo=FALSE}
-wd <- setwd("~/Dropbox/projects/TaxonomicVariance")
-setwd(wd)
-```
+
 
 ## Aria's Initial Experience with the Vegan package
 
@@ -19,21 +10,37 @@ Notes on Taxonomic Variance.
 
 * load libraries
 
-```{r}
+
+```r
 library(vegan)
+```
+
+```
+## Warning: package 'vegan' was built under R version 3.1.2
+```
+
+```
+## Loading required package: permute
+## Loading required package: lattice
+## This is vegan 2.2-0
+```
+
+```r
 library(pheatmap)
 ```
 
 * load the test data
 
-```{r}
+
+```r
 data(dune)
 data(dune.taxon)
 ```
 
 * run through the example data
 
-```{r}
+
+```r
 # calculate the taxonomic distance
 taxdis <- taxa2dist(dune.taxon, varstep=TRUE)
 # plot the tree
@@ -41,16 +48,47 @@ taxontree <- hclust(taxa2dist(dune.taxon))
 plot(taxontree)
 ```
 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-4-1.png) 
+
 * Vegan's implementation of the taxonomic distance
 
-```{r}
+
+```r
 mod <- taxondive(dune, taxdis)
 summary(mod)
 ```
 
+```
+##            Delta  Delta*  Delta+ sd(Delta+) z(Delta+) Pr(>|z|)   
+## 1        25.0089 32.1543 51.5455     9.5637   -2.8405 0.004504 **
+## 2        60.4931 66.3497 66.6869     4.6664   -2.5769 0.009970 **
+## 3        46.5985 51.7024 70.7475     4.6664   -1.7067 0.087881 . 
+## 4        58.1988 63.1763 73.4033     3.5073   -1.5135 0.130150   
+## 5        72.0452 76.9903 77.6024     3.2187   -0.3446 0.730386   
+## 6        76.4148 83.1205 80.8430     4.2170    0.5054 0.613259   
+## 7        70.2500 75.4752 78.3974     3.5073   -0.0896 0.928626   
+## 8        59.1259 63.4363 74.7865     3.8361   -1.0232 0.306220   
+## 9        56.9481 60.9854 71.1597     3.5073   -2.1532 0.031303 * 
+## 10       68.9021 74.5133 77.7617     3.8361   -0.2476 0.804432   
+## 11       76.2014 85.1259 82.5379     5.2089    0.7346 0.462605   
+## 12       69.5554 77.7922 82.6136     5.2089    0.7491 0.453792   
+## 13       55.2961 62.9232 76.6566     4.6664   -0.4404 0.659657   
+## 14       77.6087 89.2500 88.1818     6.7459    1.4039 0.160362   
+## 15       74.9245 84.2485 86.5584     5.8818    1.3341 0.182178   
+## 16       57.8435 66.5389 73.3604     5.8818   -0.9098 0.362936   
+## 17       64.8225 72.4081 70.9740     6.7459   -1.1470 0.251377   
+## 18       76.7314 85.7730 81.4015     5.2089    0.5164 0.605570   
+## 19       73.4487 81.3182 83.3712     5.2089    0.8945 0.371029   
+## 20       78.0762 87.0634 87.9221     5.8818    1.5659 0.117368   
+## Expected 73.2888 70.1816 78.7116                                 
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
 * Vegan's implementation of the distance.
 
-```{r echo=TRUE, eval=FALSE}
+
+```r
 my_dist <- function (x, varstep = FALSE, check = TRUE, labels) 
 {
     rich <- apply(x, 2, function(taxa) length(unique(taxa)))
@@ -99,7 +137,8 @@ my_dist <- function (x, varstep = FALSE, check = TRUE, labels)
 
 * calculation of the taxonomic variance statistics
 
-```{r echo=TRUE, eval=FALSE}
+
+```r
 function (comm, dis, match.force = FALSE) 
 {
     binary <- FALSE
@@ -160,68 +199,98 @@ function (comm, dis, match.force = FALSE)
 
 * Try it out with our data
 
-```{r}
+
+```r
 taxon.test = read.table("data/Phylodisttest.txt", header=TRUE, row.names="row.names", sep ="\t")
 #taxon.test = taxon.test[,-5]
 ```
 
 * build a tree based on the distances between taxa: Vary step lengths between successive levels relative to proportional loss of the number of distinct classes
 
-```{r fig.height=12}
+
+```r
 taxontree <- hclust(taxa2dist(taxon.test, varstep=TRUE))
 plot(taxontree, las =1)
 ```
 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-9-1.png) 
+
 * Uniform step lengths
 
-```{r fig.height=12}
+
+```r
 taxontree2 <- hclust(taxa2dist(taxon.test))
 plot(taxontree2, las =1)
 ```
 
-```{r fig.height=12}
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-10-1.png) 
+
+
+```r
 taxontree3 <- hclust(taxa2dist(taxon.test, check=TRUE))
 plot(taxontree3)
 ```
 
-```{r fig.height=12}
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-11-1.png) 
+
+
+```r
 taxontree4 <- hclust(taxa2dist(taxon.test, varstep=TRUE, check=TRUE))
 plot(taxontree4)
 ```
+
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-12-1.png) 
 
 ## WTD in R
 
 * source the implementation of `my_taxa2dist`:
 
-```{r}
+
+```r
 source("r_scripts/my_utilities.R")
 ```
 
 * we'll do an extremely simple test to do a sanity check of the implementation
 
-```{r}
+
+```r
 simple_test1 <- read.table("data/simple_test1.txt", header=TRUE, row.names="row.names", sep ="\t")
 simple_test1_dist <- my_taxa2dist(simple_test1, check=FALSE, wtd=TRUE)
 simple_test1_dist
 ```
 
-```{r}
+```
+##         A;B;C;D A;B;E;-
+## A;B;E;-   0.625        
+## A;F;-;-   1.375   1.250
+```
+
+
+```r
 plot(hclust(simple_test1_dist))
 ```
+
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-15-1.png) 
 
 * We'll do another quick test with a sub-set of Aria's data.
 * Perform hierarhcical clustering
 
-```{r fig.height=12}
+
+```r
 taxon.test.wtd <- my_taxa2dist(taxon.test, check=FALSE, wtd=TRUE)
 taxontree <- hclust(taxon.test.wtd)
 plot(taxontree, las =1)
 ```
 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-16-1.png) 
+
 * looks reasonable, lets take a look at a heatmap
 
-```{r fig.width=9.960317, fig.height=9.614173}
+
+```r
 pheatmap(as.matrix(taxon.test.wtd), treeheight_row=100, treeheight_col=100)
 ```
+
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-17-1.png) 
 
 
