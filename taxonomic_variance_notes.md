@@ -16,13 +16,9 @@ library(vegan)
 ```
 
 ```
-## Warning: package 'vegan' was built under R version 3.1.2
-```
-
-```
 ## Loading required package: permute
 ## Loading required package: lattice
-## This is vegan 2.2-0
+## This is vegan 2.0-10
 ```
 
 ```r
@@ -44,11 +40,19 @@ data(dune.taxon)
 # calculate the taxonomic distance
 taxdis <- taxa2dist(dune.taxon, varstep=TRUE)
 # plot the tree
-taxontree <- hclust(taxa2dist(dune.taxon))
+taxontree <- hclust(taxa2dist(dune.taxon, check=FALSE))
+```
+
+```
+## Warning: you used 'check=FALSE' and some distances are zero -- was this
+## intended?
+```
+
+```r
 plot(taxontree)
 ```
 
-![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-4-1.png) 
+![plot of chunk unnamed-chunk-4](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-4.png) 
 
 * Vegan's implementation of the taxonomic distance
 
@@ -59,28 +63,28 @@ summary(mod)
 ```
 
 ```
-##            Delta  Delta*  Delta+ sd(Delta+) z(Delta+) Pr(>|z|)   
-## 1        25.0089 32.1543 51.5455     9.5637   -2.8405 0.004504 **
-## 2        60.4931 66.3497 66.6869     4.6664   -2.5769 0.009970 **
-## 3        46.5985 51.7024 70.7475     4.6664   -1.7067 0.087881 . 
-## 4        58.1988 63.1763 73.4033     3.5073   -1.5135 0.130150   
-## 5        72.0452 76.9903 77.6024     3.2187   -0.3446 0.730386   
-## 6        76.4148 83.1205 80.8430     4.2170    0.5054 0.613259   
-## 7        70.2500 75.4752 78.3974     3.5073   -0.0896 0.928626   
-## 8        59.1259 63.4363 74.7865     3.8361   -1.0232 0.306220   
-## 9        56.9481 60.9854 71.1597     3.5073   -2.1532 0.031303 * 
-## 10       68.9021 74.5133 77.7617     3.8361   -0.2476 0.804432   
-## 11       76.2014 85.1259 82.5379     5.2089    0.7346 0.462605   
-## 12       69.5554 77.7922 82.6136     5.2089    0.7491 0.453792   
-## 13       55.2961 62.9232 76.6566     4.6664   -0.4404 0.659657   
-## 14       77.6087 89.2500 88.1818     6.7459    1.4039 0.160362   
-## 15       74.9245 84.2485 86.5584     5.8818    1.3341 0.182178   
-## 16       57.8435 66.5389 73.3604     5.8818   -0.9098 0.362936   
-## 17       64.8225 72.4081 70.9740     6.7459   -1.1470 0.251377   
-## 18       76.7314 85.7730 81.4015     5.2089    0.5164 0.605570   
-## 19       73.4487 81.3182 83.3712     5.2089    0.8945 0.371029   
-## 20       78.0762 87.0634 87.9221     5.8818    1.5659 0.117368   
-## Expected 73.2888 70.1816 78.7116                                 
+##          Delta Delta* Delta+ sd(Delta+) z(Delta+) Pr(>|z|)   
+## 2        60.57  66.44  66.78       4.29     -3.00   0.0027 **
+## 13       57.21  65.10  77.90       4.29     -0.41   0.6847   
+## 4        58.31  63.29  73.46       3.20     -1.93   0.0535 . 
+## 16       62.73  72.15  77.14       5.45     -0.46   0.6456   
+## 6        76.35  83.05  80.78       3.87      0.29   0.7692   
+## 1        25.20  32.40  51.71       8.97     -3.12   0.0018 **
+## 8        62.88  67.46  77.41       3.51     -0.64   0.5250   
+## 5        72.02  76.97  77.58       2.93     -0.70   0.4818   
+## 17       64.82  72.41  70.97       6.27     -1.38   0.1664   
+## 15       77.81  87.50  88.15       5.45      1.56   0.1183   
+## 10       68.92  74.53  77.75       3.51     -0.54   0.5890   
+## 11       76.14  85.06  82.41       4.81      0.58   0.5648   
+## 9        60.34  64.62  73.54       3.20     -1.91   0.0568 . 
+## 18       76.63  85.66  81.26       4.81      0.34   0.7368   
+## 3        46.75  51.87  70.83       4.29     -2.05   0.0402 * 
+## 20       79.81  88.99  89.38       5.45      1.79   0.0737 . 
+## 14       78.44  90.21  88.81       6.27      1.46   0.1438   
+## 19       73.34  81.20  83.22       4.81      0.74   0.4571   
+## 12       71.20  79.63  83.76       4.81      0.86   0.3923   
+## 7        71.00  76.29  79.37       3.20     -0.08   0.9330   
+## Expected 74.59  71.43  79.64                                 
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -213,7 +217,7 @@ taxontree <- hclust(taxa2dist(taxon.test, varstep=TRUE))
 plot(taxontree, las =1)
 ```
 
-![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-9-1.png) 
+![plot of chunk unnamed-chunk-9](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-9.png) 
 
 * Uniform step lengths
 
@@ -223,7 +227,7 @@ taxontree2 <- hclust(taxa2dist(taxon.test))
 plot(taxontree2, las =1)
 ```
 
-![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-10-1.png) 
+![plot of chunk unnamed-chunk-10](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-10.png) 
 
 
 ```r
@@ -231,7 +235,7 @@ taxontree3 <- hclust(taxa2dist(taxon.test, check=TRUE))
 plot(taxontree3)
 ```
 
-![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-11-1.png) 
+![plot of chunk unnamed-chunk-11](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-11.png) 
 
 
 ```r
@@ -239,7 +243,7 @@ taxontree4 <- hclust(taxa2dist(taxon.test, varstep=TRUE, check=TRUE))
 plot(taxontree4)
 ```
 
-![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-12-1.png) 
+![plot of chunk unnamed-chunk-12](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-12.png) 
 
 ## WTD in R
 
@@ -261,8 +265,8 @@ simple_test1_dist
 
 ```
 ##         A;B;C;D A;B;E;-
-## A;B;E;-   0.625        
-## A;F;-;-   1.375   1.250
+## A;B;E;-   16.13        
+## A;F;-;-   35.48   32.26
 ```
 
 
@@ -270,7 +274,7 @@ simple_test1_dist
 plot(hclust(simple_test1_dist))
 ```
 
-![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-15-1.png) 
+![plot of chunk unnamed-chunk-15](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-15.png) 
 
 * We'll do another quick test with a sub-set of Aria's data.
 * Perform hierarhcical clustering
@@ -282,7 +286,7 @@ taxontree <- hclust(taxon.test.wtd)
 plot(taxontree, las =1)
 ```
 
-![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-16-1.png) 
+![plot of chunk unnamed-chunk-16](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-16.png) 
 
 * looks reasonable, lets take a look at a heatmap
 
@@ -291,6 +295,60 @@ plot(taxontree, las =1)
 pheatmap(as.matrix(taxon.test.wtd), treeheight_row=100, treeheight_col=100)
 ```
 
-![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-17-1.png) 
+![plot of chunk unnamed-chunk-17](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-17.png) 
+
+* lets take a look at the `dune` data again,  looks about the same
 
 
+```r
+# calculate the taxonomic distance
+taxdis <- my_taxa2dist(dune.taxon, check=FALSE, varstep=FALSE, wtd=TRUE)
+```
+
+```
+## Warning: you used 'check=FALSE' and some distances are zero -- was this
+## intended?
+```
+
+```r
+# plot the tree
+taxontree_wtd <- hclust(taxdis)
+par(mfrow=c(2,1))
+plot(taxontree)
+plot(taxontree_wtd)
+```
+
+![plot of chunk unnamed-chunk-18](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-18.png) 
+
+```r
+par(mfrow=c(2,1))
+mod <- taxondive(dune, taxdis)
+summary(mod)
+```
+
+```
+##          Delta Delta* Delta+ sd(Delta+) z(Delta+) Pr(>|z|)  
+## 2        51.65  56.65  56.86       5.55     -2.07    0.038 *
+## 13       46.46  52.87  66.74       5.55     -0.29    0.771  
+## 4        48.76  52.93  64.51       4.10     -0.94    0.348  
+## 16       50.41  57.99  65.99       7.09     -0.33    0.739  
+## 6        68.30  74.30  71.52       4.98      0.63    0.526  
+## 1        12.89  16.57  40.95      11.85     -2.31    0.021 *
+## 8        50.24  53.91  66.62       4.51     -0.38    0.700  
+## 5        62.90  67.22  68.13       3.74     -0.06    0.953  
+## 17       55.81  62.34  60.32       8.20     -0.98    0.327  
+## 15       69.55  78.21  78.46       7.09      1.42    0.154  
+## 10       60.32  65.23  68.54       4.51      0.04    0.966  
+## 11       68.23  76.22  70.72       6.23      0.38    0.704  
+## 9        47.98  51.39  62.68       4.10     -1.38    0.166  
+## 18       67.96  75.97  69.31       6.23      0.15    0.878  
+## 3        35.92  39.85  62.22       5.55     -1.11    0.269  
+## 20       72.63  80.99  81.63       7.09      1.87    0.061 .
+## 14       71.22  81.90  79.06       8.20      1.31    0.192  
+## 19       62.70  69.42  71.25       6.23      0.47    0.642  
+## 12       62.72  70.15  74.60       6.23      1.00    0.316  
+## 7        61.94  66.54  69.68       4.10      0.32    0.746  
+## Expected 64.58  61.84  68.35                                
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```

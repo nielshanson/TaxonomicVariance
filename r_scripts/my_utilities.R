@@ -46,6 +46,7 @@ my_taxa2dist <- function (x, varstep = FALSE, check = FALSE, wtd= FALSE, labels)
   }
   else if (wtd) {
     add <- 1/(2^((ncol(x)-1):-1))
+    add <- add *100 / sum(add)
     # add <- rep(1.0, length(add))
     # add <- add/sum(wtd_add) * 100 # scale between 0 and 100
   }

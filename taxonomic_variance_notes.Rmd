@@ -37,7 +37,7 @@ data(dune.taxon)
 # calculate the taxonomic distance
 taxdis <- taxa2dist(dune.taxon, varstep=TRUE)
 # plot the tree
-taxontree <- hclust(taxa2dist(dune.taxon))
+taxontree <- hclust(taxa2dist(dune.taxon, check=FALSE))
 plot(taxontree)
 ```
 
@@ -214,7 +214,7 @@ plot(hclust(simple_test1_dist))
 
 ```{r fig.height=12}
 taxon.test.wtd <- my_taxa2dist(taxon.test, check=FALSE, wtd=TRUE)
-taxontree <- hclust(taxon.test.wtd)
+taxontree <- hclust(taxon.test.wtd, method="complete")
 plot(taxontree, las =1)
 ```
 
@@ -224,4 +224,19 @@ plot(taxontree, las =1)
 pheatmap(as.matrix(taxon.test.wtd), treeheight_row=100, treeheight_col=100)
 ```
 
+* lets take a look at the `dune` data again,  looks about the same
 
+```{r}
+# calculate the taxonomic distance
+taxdis <- my_taxa2dist(dune.taxon, check=FALSE, varstep=FALSE, wtd=TRUE)
+# plot the tree
+taxontree_wtd <- hclust(taxdis)
+par(mfrow=c(2,1))
+plot(taxontree)
+plot(taxontree_wtd)
+par(mfrow=c(2,1))
+mod <- taxondive(dune, taxdis)
+summary(mod)
+mod2 <- taxondive(dune2, taxdis)
+summary(mod2)
+```
