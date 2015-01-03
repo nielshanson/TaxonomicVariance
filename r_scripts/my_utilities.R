@@ -1,16 +1,12 @@
 # WTD functions
 
 test_fun <- function(x,y) {
-  if (x == "unclassified") {x = NA}
-  if (y == "unclassified") {y = NA}
-  if (xor(is.na(x), is.na(y))) {
+#  if (x == "unclassified") {x = NA}
+#  if (y == "unclassified") {y = NA}
+  if (xor(x == "unclassified", y == "unclassified")) {
     # only one is missing
     return(1)
-  }  
-  if ( is.na(x) & is.na(y) ){
-    return(0)
-  }
-  if (x != y) {
+  } else if (x != y) {
     return(2)
   } else {
     return(0)
@@ -19,6 +15,12 @@ test_fun <- function(x,y) {
 
 # vectorize my function
 test_fun_vec <- Vectorize(test_fun)
+
+
+# create taxa_table
+create_taxa_table <- function(x) {
+  
+}
 
 my_taxa2dist <- function (x, varstep = FALSE, check = FALSE, wtd= FALSE, labels) 
 {
@@ -65,6 +67,7 @@ my_taxa2dist <- function (x, varstep = FALSE, check = FALSE, wtd= FALSE, labels)
   out <- matrix(0, nrow(x), nrow(x))
   for (i in 1:ncol(x)) {
     # adds the distance to the appropreate cells of the matrix
+    print(i)
     out <- out + add[i+1] * outer(x[, i], x[, i], test_fun_vec)
   }
   

@@ -9,7 +9,7 @@ output:
 ---
 
 ```{r echo=FALSE}
-wd <- setwd("~/Dropbox/projects/TaxonomicVariance")
+wd <- "~/Dropbox/projects/TaxonomicVariance"
 setwd(wd)
 ```
 
@@ -22,6 +22,9 @@ Notes on Taxonomic Variance.
 ```{r}
 library(vegan)
 library(pheatmap)
+library(plyr)
+library(dplyr)
+library(data.table)
 ```
 
 * load the test data
@@ -240,3 +243,43 @@ summary(mod)
 mod2 <- taxondive(dune2, taxdis)
 summary(mod2)
 ```
+
+## Development of a pathway parcer
+
+```{r}
+df <- read.table("data/a26980-scaffolds.long.pwy.taxa.txt.gz", header=TRUE, sep="\t",
+                 colClasses= c('character', 'character', 'character', 'character', 'character',
+                               'numeric', 'numeric', 'numeric', 'character', 'character'),quote = "")
+
+# dt <- fread('data/a26980-scaffolds.long.pwy.taxa.txt', sep="\t", header=TRUE)
+
+
+create_rows <- function(x, max) {
+  c(x, rep(NA, max - length(x)))
+}
+
+test_taxa2 <- unique(df$TAXONOMY)
+
+create_taxa_df <- function(x) {
+  split_taxa <- sapply(x, strsplit, ";")
+  lengths <- sapply(split_taxa, length)
+  max_length <- max(lengths)
+  rows <- lapply(split_taxa, create_rows, max_length)
+  rows <- lapply(rows, rev) # reverse rows
+  taxa_df <- t(data.frame(rows))
+  row.names(taxa_df) <- x
+  taxa_df[is.na(taxa_df)] <- "unclassified"
+  return(taxa_df)
+}
+
+split_taxa <- sapply(test_taxa2, strsplit, ";")
+lengths <- sapply(split_taxa, length)
+max_length <- max(lengths)
+
+
+test_df <- create_taxa_df(test_taxa2)
+taxdis <- my_taxa2dist(test_df, check=FALSE, varstep=FALSE, wtd=TRUE)
+taxadis_matrix <- as.matrix(taxdis)
+test_tree<- hclust(taxdis)
+```
+

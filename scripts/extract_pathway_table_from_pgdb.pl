@@ -1119,7 +1119,7 @@ use Data::Dumper;
    
    # print out headers for the 'long' and 'lookup' output formats
    if ($TYPE eq "long" ) {
-      print OUT "SAMPLE\tPWY_NAME\tPWY_COMMON_NAME\tNUM_REACTIONS\tNUM_COVERED_REACTIONS\tORF_COUNT\tORF\n";
+      print OUT "SAMPLE\tPWY_NAME\tPWY_COMMON_NAME\tRXN_NAME\tRXN_COMMON_NAME\tNUM_REACTIONS\tNUM_COVERED_REACTIONS\tORF_COUNT\tORF\n";
       
    } elsif ($TYPE eq "lookup") {
       print OUT "SAMPLE\tPWY_NAME\tPWY_COMMON_NAME\tNUM_REACTIONS\tNUM_COVERED_REACTIONS\tORF_COUNT\n";
@@ -1159,7 +1159,7 @@ use Data::Dumper;
                  $rxn_to_sample { $reaction }{ $sample_name } = scalar(@rxngenes); # hash each short_name to the pathway count
              }
              
-             map { $orf_strings{$_} =1 } @rxngenes;
+             map { $orf_strings{$_} = $reaction } @rxngenes;
            }
            
            my $pwy_coverage = ($num_covered_rxns / $num_reactions); # calculate current pathway coverage
@@ -1168,10 +1168,11 @@ use Data::Dumper;
              # only print if more than minimum support
               if ($TYPE eq "long") {
                 # print the long_table output
-                for (keys %orf_strings) {
-                     my $gene_common = $cyc->get_slot_value($_,"common-name");
+                while (my($key, $val) = each %orf_strings) {
+                     my $gene_common = $cyc->get_slot_value($key,"common-name");
                      my $outputstr = "";
-                     $outputstr = $sample_name . "\t" . $pathway . "\t" . cleanup($pathway_common_name) . "\t" . $num_reactions . "\t" . $num_covered_rxns . "\t" . $num_predicted_orfs . "\t" . $gene_common ;
+                     my $rxn_common_name = $cyc->get_slot_value($val,"common-name") || "NA";
+                     $outputstr = $sample_name . "\t" . $pathway . "\t" . cleanup($pathway_common_name) . "\t" . $val . "\t" . cleanup($rxn_common_name) . "\t" . $num_reactions . "\t" . $num_covered_rxns . "\t" . $num_predicted_orfs . "\t" . $gene_common ;
                      $outputstr .= "\n";
                      # print $outputstr;
                      print OUT $outputstr;
