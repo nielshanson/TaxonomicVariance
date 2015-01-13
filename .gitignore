@@ -2,5 +2,17 @@
 .Rhistory
 .RData
 .DS_Store
+.pyc
+.Rapp.history
+
+# contains large data files too big for GitHub
 scratch
-scratch/*
+scratch/
+annotations/
+annotations
+scripts/workspace/
+scripts/workspace
+scripts/python_resources/ncbi.map
+scripts/python_resources/ncbi_taxonomy_tree.txt
+data/
+data

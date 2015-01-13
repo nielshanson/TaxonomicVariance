@@ -281,5 +281,10 @@ test_df <- create_taxa_df(test_taxa2)
 taxdis <- my_taxa2dist(test_df, check=FALSE, varstep=FALSE, wtd=TRUE)
 taxadis_matrix <- as.matrix(taxdis)
 test_tree<- hclust(taxdis)
+plot(test_tree)
 ```
 
+
+```{r}
+
+```

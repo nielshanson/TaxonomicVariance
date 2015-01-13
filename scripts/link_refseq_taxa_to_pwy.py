@@ -20,40 +20,72 @@ parser.add_argument("--ncbi_tree", type=str, dest="ncbi_tree", default=None,
                   required=True, nargs=1, help='NCBI Tree')
 parser.add_argument("--megan_names", type=str, dest="megan_names", default=None,
                     required=False, nargs=1, help='MEGAN preferred names')
+parser.add_argument("--lca", dest="lca", action='store_true', default=False,
+                    required=False, help='Calcualte LCA')
+#parser.add_argument("--lca_star", dest="lca_star", action='store_true', default=False,
+#                    required=False, help='Calcualte LCA')
 parser.add_argument("-o", "--output_file", type=str, dest="output_file", default=None,
                    required=False, nargs=1, help='output file to load into R')
 
-def read_and_clean_parsed_blast(file_name, blast_to_taxonomy):
-    if ".gz" in file_name:
-        with gzip.open(file_name, 'rb') as fh:
-            for line in fh:
-                fields = line.split("\t")
-                hits = taxa_pattern.search(fields[-1])
-                if hits:
-                    taxa = hits.group(1)
-                    lineage = map(lcastar.translateIdToName, lcastar.get_lineage(lcastar.get_a_Valid_ID([taxa])))
-                    if not None in lineage:
-                        # only adds the first hit
-                        if fields[0] not in blast_to_taxonomy:
-                            blast_to_taxonomy[fields[0]] = ";".join(lineage[::-1])
-    
+def read_and_clean_parsed_blast(file_name, blast_to_taxonomy, lca=False):
+    if lca:
+        # calculate LCA
+        blast_to_lca = {}
+        if ".gz" in file_name:
+             with gzip.open(file_name, 'rb') as fh:
+                 for line in fh:
+                     fields = line.split("\t")
+                     hits = taxa_pattern.search(fields[-1])
+                     if hits:
+                         taxa = hits.group(1)
+                         if taxa:
+                             if fields[0] not in blast_to_taxonomy:
+                                 blast_to_taxonomy[fields[0]] = []
+                             blast_to_taxonomy[fields[0]].append(taxa)
+             for orf in blast_to_taxonomy:
+                temp_list = []
+                for t in blast_to_taxonomy[orf]:
+                    temp_list.append([t])
+                print_id = True
+                lca = lcastar.getTaxonomy(temp_list, print_id) # get LCA
+                lca_star = lcastar.lca_star(blast_to_taxonomy[orf], True, print_id)
+                #print lca_star
+                lca_lineage = map(lcastar.translateIdToName, lcastar.get_lineage(lca))
+                #lca_star_lineage = map(lcastar.translateIdToName, lcastar.get_lineage(lca_star[0]))
+                #print lca_star_lineage
+                if orf not in blast_to_lca:
+                    blast_to_lca[orf] = ";".join(lca_lineage[::-1])
+        blast_to_taxonomy = blast_to_lca
     else:
-        with open(file_name, "r") as fh:
-            for line in fh:
-                fields = line.split("\t")
-                hits = taxa_pattern.search(fields[-1])
-                if hits:
-                    taxa = hits.group(1)
-                    lineage = map(lcastar.translateIdToName, lcastar.get_lineage(lcastar.get_a_Valid_ID([taxa])))
-                    if not None in lineage:
-                        print ";".join(lineage[::-1])
-                        # only adds the first hit
-                        if fields[0] not in blast_to_taxonomy:
-                            blast_to_taxonomy[fields[0]] = lineage
+        if ".gz" in file_name:
+            with gzip.open(file_name, 'rb') as fh:
+                for line in fh:
+                    fields = line.split("\t")
+                    hits = taxa_pattern.search(fields[-1])
+                    if hits:
+                        taxa = hits.group(1)
+                        lineage = map(lcastar.translateIdToName, lcastar.get_lineage(lcastar.get_a_Valid_ID([taxa])))
+                        if not None in lineage:
+                            # only adds the first hit
+                            if fields[0] not in blast_to_taxonomy:
+                                blast_to_taxonomy[fields[0]] = ";".join(lineage[::-1])
+        else:
+            with open(file_name, "r") as fh:
+                for line in fh:
+                    fields = line.split("\t")
+                    hits = taxa_pattern.search(fields[-1])
+                    if hits:
+                        taxa = hits.group(1)
+                        lineage = map(lcastar.translateIdToName, lcastar.get_lineage(lcastar.get_a_Valid_ID([taxa])))
+                        if not None in lineage:
+                            print ";".join(lineage[::-1])
+                            # only adds the first hit
+                            if fields[0] not in blast_to_taxonomy:
+                                blast_to_taxonomy[fields[0]] = lineage
     
     return blast_to_taxonomy
 
-taxa_pattern = re.compile("\[(.*)\]")
+taxa_pattern = re.compile("\[(.*?)\]")
 
 # the main function of the script
 def main():
@@ -65,15 +97,22 @@ def main():
     ncbi_tree = args["ncbi_tree"][0]
     megan_names = args["megan_names"][0]
     output_file = args["output_file"][0]
+    lca = args["lca"]
     
     # Load NCBI Tree and LCA Star object
-    global lcastar 
+    global lcastar
     lcastar = LCAStar(ncbi_tree, megan_names)
+    
+    # LCA star parameters
+    alpha = 0.51
+    min_reads = 0
+    lcastar.setLCAStarParameters(0, alpha, min_reads)
     print 'Done initializing LCA Star'
     
     # catpure taxonomic annotation from parsed B/LAST file
     blast_to_taxonomy = {} # map from read to taxonomy
-    blast_to_taxonomy = read_and_clean_parsed_blast(parsed_blast, blast_to_taxonomy)
+    blast_to_taxonomy = read_and_clean_parsed_blast(parsed_blast, blast_to_taxonomy,lca)
+    
     
     # read through pathway file and append taxonomy field if hit occurs:
     header = ["SAMPLE", "PWY_NAME", "PWY_COMMON_NAME", "RXN_NAME", "RXN_COMMON_NAME", "NUM_REACTIONS",
