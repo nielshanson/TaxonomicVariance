@@ -286,5 +286,113 @@ plot(test_tree)
 
 
 ```{r}
+# create matrix of taxonomies
+pwy_taxa_files <- list.files("data/pwy_taxa/", pattern="*taxa.txt.gz")
+rdata_files <- list.files("data/pwy_taxa/", pattern="*.Rdata")
+setwd("data/pwy_taxa/")
 
+create_rows <- function(x, max) {
+  c(x, rep(NA, max - length(x)))
+}
+
+create_taxa_df <- function(x) {
+  split_taxa <- sapply(x, strsplit, ";")
+  lengths <- sapply(split_taxa, length)
+  max_length <- max(lengths)
+  rows <- lapply(split_taxa, create_rows, max_length)
+  rows <- lapply(rows, rev) # reverse rows
+  taxa_df <- t(data.frame(rows))
+  row.names(taxa_df) <- x
+  taxa_df[is.na(taxa_df)] <- "unclassified"
+  return(taxa_df)
+}
+
+test_taxa2 <- c()
+for (pt_file in pwy_taxa_files) {
+  print(pt_file)
+  df <- read.table(pt_file, header=TRUE, sep="\t",
+                 colClasses= c('character', 'character', 'character', 'character', 'character',
+                               'numeric', 'numeric', 'numeric', 'character', 'character'),quote = "")
+  my_taxa <- unique(df$TAXONOMY)
+  test_taxa2 <- c(test_taxa2, my_taxa)
+}
+
+# construct distance matrix
+if("taxdis.Rdata" %in% rdata_files) { 
+  test_taxa2 <- unique(test_taxa2)
+  split_taxa <- sapply(test_taxa2, strsplit, ";")
+  lengths <- sapply(split_taxa, length)
+  max_length <- max(lengths)
+  test_df <- create_taxa_df(test_taxa2)
+  taxdis <- my_taxa2dist(test_df, check=FALSE, varstep=FALSE, wtd=TRUE)
+
+  # save to disk
+  save(taxdis, file="taxdis.Rdata")
+} else {
+  load("taxdis.Rdata")
+}
+
+# construct sample by taxa matrix
+sample_taxa_matrix <- NULL
+for (pt_file in pwy_taxa_files) {
+  print(pt_file)
+  df <- read.table(pt_file, header=TRUE, sep="\t",
+                 colClasses= c('character', 'character', 'character', 'character', 'character',
+                               'numeric', 'numeric', 'numeric', 'character', 'character'),quote = "")
+  my_row <- table(df$TAXONOMY)[test_taxa2]
+  my_row[is.na(my_row)] <- 0
+  sample_taxa_matrix <- rbind(sample_taxa_matrix,my_row)
+}
+
+# set sample as row_names
+colnames(sample_taxa_matrix) <- test_taxa2
+row.names(sample_taxa_matrix) <- sub("-scaffolds.long.pwy.taxa.txt.gz", "", pwy_taxa_files)
+
+# calculate taxonomic diversity
+diversity_result <- taxondive(sample_taxa_matrix, taxdis)
+res <- summary(diversity_result)
+```
+
+
+```{r}
+setwd("~/Dropbox/projects/TaxonomicVariance/data/")
+meta_df <- read.table("LTSP_WL_MappingandInfo_clean.csv", sep=",", header=TRUE)
+res_matrix <- as.matrix(res)
+res_matrix <- cbind(res_matrix[-nrow(res_matrix),], as.matrix(meta_df[-24,])) # combine with df
+master_df <- data.frame(delta=as.numeric(res_matrix[,1]),
+           delta_star=as.numeric(res_matrix[,2]),
+           delta_plus=as.numeric(res_matrix[,3]),
+           delta_plus_sd=as.numeric(res_matrix[,4]),
+           delta_plus_z=as.numeric(res_matrix[,5]),
+           delta_plus_pr=as.numeric(res_matrix[,6]),
+           horizon=as.character(res_matrix[,8]),
+           treatment=as.character(res_matrix[,9]),
+           depth=as.numeric(res_matrix[,10]),
+           pH=as.numeric(res_matrix[,11]),
+           totalC_percent=as.numeric(res_matrix[,12]),
+           totalN_percent=as.numeric(res_matrix[,13]),
+           totalorganicN_ppm=as.numeric(res_matrix[,14]),
+           nh4_ppm=as.numeric(res_matrix[,15]),
+           no3_ppm=as.numeric(res_matrix[,16]))
+
+library(ggplot2)
+library(reshape2)
+
+
+# delta_star (ORF count)
+ggplot(master_df, aes(x=depth, y=delta_star)) + geom_smooth(formula=y ~ x, method="glm", size=1.5, color="light blue", fill="light blue") + geom_smooth(size=1.5, color="salmon", fill="salmon") + geom_point(size=3.5, aes(col=treatment)) + theme_bw()
+ggplot(master_df, aes(x=depth, y=delta_star)) + geom_smooth(formula=y ~ x, method="glm", size=1.5) + geom_point(size=3.5, aes(col=treatment)) + facet_wrap(~treatment) + theme_bw()
+
+quartz(width=9.832677, height=4.399606)
+ggplot(master_df, aes(x=depth, y=delta_star)) + geom_smooth(method="glm", size=1.5) + geom_point(size=3.5, aes(col=horizon)) + theme_bw() + facet_wrap(~treatment)
+
+# delta plus
+quartz(width=9.832677, height=4.399606)
+ggplot(master_df, aes(x=depth, y=delta_plus)) + geom_smooth(formula=y ~ x, method="glm", size=1.5) + geom_point(size=3.5, aes(col=horizon)) + facet_wrap(~treatment) + theme_bw()
+
+melt(master_df)
+plot(as.numeric(as.character(master_df$depth_cm)), as.numeric(as.character(master_df[,"Delta*"])), col=master_df$Horizon)
+plot(as.numeric(as.character(master_df$depth_cm)), as.numeric(as.character(master_df[,"Delta+"])), col=master_df$Horizon)
+
+melt(as.data.frame(master_df))
 ```
