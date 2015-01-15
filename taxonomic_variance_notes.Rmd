@@ -1,11 +1,15 @@
 ---
-title: "Taxonomic Variance Notes"
+title: "Taxonomic Diveristy and Distinctness Measures Applied to William's Lake Soil Metagenomes"
 author: "Niels Hanson, Aria Hahn"
-date: "December 29, 2014"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
   html_document:
     keep_md: yes
+    number_sections: yes
     theme: readable
+    toc: yes
+csl: ieee.csl
+bibliography: taxonomic_variance_notes.bib
 ---
 
 ```{r echo=FALSE}
@@ -13,35 +17,76 @@ wd <- "~/Dropbox/projects/TaxonomicVariance"
 setwd(wd)
 ```
 
-## Aria's Initial Experience with the Vegan package
+# Summary
 
-Notes on Taxonomic Variance.
+This document details the implementation of the Clarke's and Warwick's Diversity and Distinctness measures using the functional annotation to reference genomes [[@Warwick:1995vf, @Pienkowski:1998um, @Clarke:1999tx]]. However, the current implementation in the Vegan package does not take into account incomplete taxonomies [[@Oksanen:2007vs]], a common situation when using functional-genes to infer taxonomy via the Lowest Common Ancestor method in meta'omic samples [[@Huson:2007jl]]. Moreover, we would like to take advantage of properties and intution built into the Weighted Taxonomic Distance (WTD) [[@Hanson:2014bz]], which creates a hard separation between distances accross sub-trees. To accomplish this we implement the calculation of distances from partial taxonomies, allowing the efficient calcuation of WTD matricies. Moreover, we implement a number of analytical utility scripts to format taxonomic lineages the MetaPathways pipeline to create compatible distance and sample abundance matrix. Using the William's Lake (WL) soil metagenoems as a test case, we using that both taxonomic diversity measures, DeltaStar and DeltaPlus, show a positive correlation with increasing depth.
 
-* load libraries
+This document shows the development of the method step-by-step. First it describes the original behavior of the implemented taxonomic diversity measures as implemented in the Vegan package, demonstrating their incompatability with partial taxonomcies. Next, we describe the implementation of a matrix form calculation of partial taxonoies, and through weighting demonstrate the implementation of the WTD. Next, we describe the development and use of utility scripts for use with MetaPathways output for creating taxonomies with respect to samples, pathways, and reactions, using presence/absence, ORF counts, or a normalized read-mapping measure, Reads per Kilobase per Million Mapped reads. Finally, we demonstrate the use of this implementation using 25 metagenomic samples from the William's Lake long term soil productivity (LTSP) site, and show that both diversity metrics reflect the increase in taxonomic diversity with increasing depth in the natural, undesturbed treatment, while a flat or negative trend is observed in the clear-cut treatment. 
 
-```{r}
+## Contents
+
+This analysis consists of the following files and data products:
+
+* [scripts/](): Directory containing perl and python scripts to handle MetaPathways output and ePGDBs
+     * [extract_pathway_table_from_pgdb.pl](): Slightly-modified version of the MetaPathways script to extract pathways in the 'long' format with pathways and reactions as variables
+     * [link_refseq_taxa_to_pathway.py](): Script to link pathway tables with RefSeq Best-HIT, Lowest Common Ancestor (LCA), LCA* taxonomies, as well as RPKM values. This script requires the parsed B/LAST outputs, RPKM files, produced by MetaPathways, and the 'long' pathway tables produced by `extract_pathway_table_from_pgdb.pl` from the ePGDBs. Large tables can be gziped (.gz) for convenience.
+     * [extract_LTSP_WL_pwys.sh](): Shell script uses `extract_pathway_table_from_pgdb.pl` to extract WL pathways from Pathway Tools
+     * [run_link_refseq_taxa_to_pathway.sh](): Shell script runs `link_refseq_taxa_to_pathway.py` on the WL samples
+     * [python_resources/](): Folder containing classes and methods for running `link_refseq_taxa_to_pathway.py`
+          * [ncbi_taxonomy_tree.txt](): Slightly-modified NCBI Taxonomy Database Hierarchy.
+          * [ncbi.map](): Preferred taxonomy names from NCBI IDs.
+          * [LCAStar.py](): Class and functions for calculating LCA, MEGAN Taxonomy, and LCA*.
+
+* [annotations/](): Directory containing RefSeq annotations (`.LASTout.parsed.txt.gz`), RPKM values (`.orf_rpkm.txt.gz`), and long-style pathway tables (`.long.pwy.txt.gz`) for the WL LTSP samples.
+* [r_scripts/](): Directory of r functions.
+     * [my_taxa2dist.R](): Modifiction of the `taxa2dist()` to handle partial taxonomies and the WTD
+* [data/](): Processed data ready for analysis in R
+     * [simple_test.txt](): Very basic taxonomy matrix with incomplete taxonomies for testing our implementation
+     * [Phylodisttest.txt](): Matrix of partial taxonomies from the WL LTSP samples 
+     * [LTSP_WL_MappingandInfo_clean.csv](): Matrix of metadata, chemistry and experiemntal conditions for the WL samples
+          * [pwy_taxa/](): long-style pathway tables with LCA taxonomies and RPKM values from the LTSP samples
+     * [temp/](): Directory to store previous `.Rdata` files for fast processing. Remove contents of this directory to reboot the analysis and reprocess taxonomic distance matrix
+* [figures/](): Directory for pdf figures in the analysis.
+
+## R Libraries
+
+* Load R libraries
+
+```{r message=FALSE, warning=FALSE}
 library(vegan)
 library(pheatmap)
-library(plyr)
 library(dplyr)
-library(data.table)
+library(ggplot2)
+library(reshape2)
+library(RColorBrewer)
+figure_dir <- paste(wd, "figures", sep="/")
 ```
 
-* load the test data
+# Implementation
+
+The initial implementation in VEGAN does allow for incomplete taxonomies. In this section we demonstrate this behavior using the Dutch Dune dataset and a subset of the WL LTSP partial taxonomies. The Dutch Dune Meadow dataset has full taxonomies and is not particularly large compared to the number of unique taxonomies found in environmental datasets. We observe that the current implementation of `taxa2dist`, while improved to some degree class-based scaling, produces distances that do not respect partial taxonomies.
+
+* Load the Dutch Dune Meadow data.
 
 ```{r}
 data(dune)
 data(dune.taxon)
 ```
 
-* run through the example data
+* Run through the example data
 
 ```{r}
 # calculate the taxonomic distance
-taxdis <- taxa2dist(dune.taxon, varstep=TRUE)
+dune.taxdis <- taxa2dist(dune.taxon, varstep=TRUE)
 # plot the tree
-taxontree <- hclust(taxa2dist(dune.taxon, check=FALSE))
-plot(taxontree)
+dune.taxontree <- hclust(dune.taxdis)
+plot(dune.taxontree)
+```
+
+* Plotting the matrix as a heatmap will show the structure in more detail
+
+```{r fig.width=10, fig.height=10}
+pheatmap(taxdis, treeheight_row=150, treeheight_col=150)
 ```
 
 * Vegan's implementation of the taxonomic distance
@@ -51,215 +96,138 @@ mod <- taxondive(dune, taxdis)
 summary(mod)
 ```
 
-* Vegan's implementation of the distance.
-
-```{r echo=TRUE, eval=FALSE}
-my_dist <- function (x, varstep = FALSE, check = TRUE, labels) 
-{
-    rich <- apply(x, 2, function(taxa) length(unique(taxa)))
-    S <- nrow(x)
-    if (check) {
-        keep <- rich < S & rich > 1
-        rich <- rich[keep]
-        x <- x[, keep]
-    }
-    i <- rev(order(rich))
-    x <- x[, i]
-    rich <- rich[i]
-    if (varstep) {
-        add <- -diff(c(nrow(x), rich, 1))
-        add <- add/c(S, rich)
-        add <- add/sum(add) * 100
-    }
-    else {
-        add <- rep(100/(ncol(x) + check), ncol(x) + check)
-    }
-    if (!is.null(names(add))) 
-        names(add) <- c("Base", names(add)[-length(add)])
-    if (!check) 
-        add <- c(0, add)
-    out <- matrix(add[1], nrow(x), nrow(x))
-    for (i in 1:ncol(x)) {
-        out <- out + add[i + 1] * outer(x[, i], x[, i], "!=")
-    }
-    out <- as.dist(out)
-    attr(out, "method") <- "taxa2dist"
-    attr(out, "steps") <- add
-    if (missing(labels)) {
-        attr(out, "Labels") <- rownames(x)
-    }
-    else {
-        if (length(labels) != nrow(x)) 
-            warning("Labels are wrong: needed ", nrow(x), " got ", 
-                length(labels))
-        attr(out, "Labels") <- as.character(labels)
-    }
-    if (!check && any(out <= 0)) 
-        warning("you used 'check=FALSE' and some distances are zero -- was this intended?")
-    out
-}
-```
-
-* calculation of the taxonomic variance statistics
-
-```{r echo=TRUE, eval=FALSE}
-function (comm, dis, match.force = FALSE) 
-{
-    binary <- FALSE
-    comm <- as.matrix(comm)
-    if (missing(dis)) {
-        n <- ncol(comm)
-        dis <- structure(rep(1, n * (n - 1)/2), Size = n, class = "dist")
-    }
-    dis <- as.dist(dis)
-    if (match.force || attr(dis, "Size") != ncol(comm)) {
-        if (match.force) 
-            message("Forced matching 'dis' labels and 'comm' names")
-        else message("Dimensions do not match between 'comm' and 'dis'")
-        if (all(colnames(comm) %in% labels(dis))) {
-            dis <- as.matrix(dis)
-            dis <- as.dist(dis[colnames(comm), colnames(comm)])
-            message("Matched 'dis' labels by 'comm' names")
-        }
-        else {
-            stop("Could not match names in 'dis' and 'comm'")
-        }
-        if (length(unique(colnames(comm))) != ncol(comm)) 
-            stop("Names not in unique in 'comm': match wrong")
-        if (length(unique(labels(dis))) != attr(dis, "Size")) 
-            warning("Labels not unique in 'dis': matching probably wrong")
-    }
-    del <- dstar <- dplus <- Ed <- Edstar <- edplus <- NULL
-    if (!binary) {
-        del <- apply(comm, 1, function(x) sum(as.dist(outer(x, x)) * dis))
-        dstar <- apply(comm, 1, function(x) sum(dis * (xx <- as.dist(outer(x, x))))/sum(xx))
-        rs <- rowSums(comm)
-        del <- del/rs/(rs - 1) * 2
-        cs <- colSums(comm)
-        tmp <- sum(as.dist(outer(cs, cs)) * dis)
-        Ed <- tmp/sum(cs)/sum(cs - 1) * 2
-        Edstar <- tmp/sum(cs)/(sum(cs) - 1) * 2
-    }
-    comm <- ifelse(comm > 0, 1, 0)
-    dplus <- apply(comm, 1, function(x) sum(as.dist(outer(x, x)) * dis))
-    Lambda <- apply(comm, 1, function(x) sum(as.dist(outer(x, x)) * dis^2))
-    m <- rowSums(comm)
-    dplus <- dplus/m/(m - 1) * 2
-    Lambda <- Lambda/m/(m - 1) * 2 - dplus^2
-    S <- attr(dis, "Size")
-    omebar <- sum(dis)/S/(S - 1) * 2
-    varome <- sum(dis^2)/S/(S - 1) * 2 - omebar^2
-    omei <- rowSums(as.matrix(dis))/(S - 1)
-    varomebar <- sum(omei^2)/S - omebar^2
-    vardplus <- 2 * (S - m)/(m * (m - 1) * (S - 2) * (S - 3)) * 
-        ((S - m - 1) * varome + 2 * (S - 1) * (m - 2) * varomebar)
-    out <- list(Species = m, D = del, Dstar = dstar, Lambda = Lambda, 
-        Dplus = dplus, sd.Dplus = sqrt(vardplus), SDplus = m * 
-            dplus, ED = Ed, EDstar = Edstar, EDplus = omebar)
-    class(out) <- "taxondive"
-    out
-}
-```
-
-* Try it out with our data
+* Try it out with some partial taxonomies
 
 ```{r}
-taxon.test = read.table("data/Phylodisttest.txt", header=TRUE, row.names="row.names", sep ="\t")
-#taxon.test = taxon.test[,-5]
+taxon.test = read.table(paste(wd, "data/Phylodisttest.txt", sep="/"), header=TRUE, row.names="row.names", sep ="\t")
 ```
 
-* build a tree based on the distances between taxa: Vary step lengths between successive levels relative to proportional loss of the number of distinct classes
+* Build a tree based on the distances as calculated via the original implementation of taxa2dist in Vegan. We will vary the step lengths between successive levels relative to proportional loss of the number of distinct classes.
 
 ```{r fig.height=12}
-taxontree <- hclust(taxa2dist(taxon.test, varstep=TRUE))
-plot(taxontree, las =1)
+taxon.test.matrix <- taxa2dist(taxon.test, varstep=TRUE)
+taxontree <- hclust(taxon.test.matrix)
+plot(taxontree)
+```
+
+* Structure with number of distinct class step lengths.
+
+```{r fig.width=12, fig.height=12}
+pheatmap(taxon.test.matrix, treeheight_row=150, treeheight_col=150)
+pdf(file = paste(figure_dir, "WL_matrix_class_step.pdf", sep="/"), width=12, height=12)
+pheatmap(as.matrix(taxon.test.wtd), treeheight_row=150, treeheight_col=150)
+dev.off()
 ```
 
 * Uniform step lengths
 
 ```{r fig.height=12}
-taxontree2 <- hclust(taxa2dist(taxon.test))
-plot(taxontree2, las =1)
+taxon.test.matrix2 <- taxa2dist(taxon.test)
+taxontree2 <- hclust(taxon.test.matrix2)
+plot(taxontree2)
 ```
 
-```{r fig.height=12}
-taxontree3 <- hclust(taxa2dist(taxon.test, check=TRUE))
-plot(taxontree3)
+* Structure with uniform step lengths.
+
+```{r fig.width=12, fig.height=12}
+pheatmap(taxon.test.matrix2, treeheight_row=150, treeheight_col=150)
 ```
 
-```{r fig.height=12}
-taxontree4 <- hclust(taxa2dist(taxon.test, varstep=TRUE, check=TRUE))
-plot(taxontree4)
-```
+## Implementing WTD and Partial Taxonomy
 
-## WTD in R
+This demonstrates our implementation of the weighted taxonomic distance and partial taxonomies in `my_taxa2dist.R`, a slightly modified version of the original. 
+
+*TODO: Add some details of the matrix form exclusive OR and the outer product form of the taxonomic distance matrix.*
 
 * source the implementation of `my_taxa2dist`:
 
 ```{r}
-source("r_scripts/my_utilities.R")
+source(paste(wd, "r_scripts/my_taxa2dist.R", sep="/"))
 ```
 
-* we'll do an extremely simple test to do a sanity check of the implementation
+* we'll do a simple test to do a sanity check of the implementation
 
 ```{r}
-simple_test1 <- read.table("data/simple_test1.txt", header=TRUE, row.names="row.names", sep ="\t")
+simple_test1 <- read.table(paste(wd, "data/simple_test.txt", sep="/"), header=TRUE, row.names="row.names", sep ="\t")
 simple_test1_dist <- my_taxa2dist(simple_test1, check=FALSE, wtd=TRUE)
 simple_test1_dist
 ```
+
+* plot the simple tree
 
 ```{r}
 plot(hclust(simple_test1_dist))
 ```
 
-* We'll do another quick test with a sub-set of Aria's data.
-* Perform hierarhcical clustering
-
-```{r fig.height=12}
-taxon.test.wtd <- my_taxa2dist(taxon.test, check=FALSE, wtd=TRUE)
-taxontree <- hclust(taxon.test.wtd, method="complete")
-plot(taxontree, las =1)
-```
-
-* looks reasonable, lets take a look at a heatmap
+* We'll do another quick test with the LTSP data
 
 ```{r fig.width=9.960317, fig.height=9.614173}
-pheatmap(as.matrix(taxon.test.wtd), treeheight_row=100, treeheight_col=100)
+taxon.test.wtd <- my_taxa2dist(taxon.test, check=FALSE, wtd=TRUE)
+pheatmap(as.matrix(taxon.test.wtd), treeheight_row=150, treeheight_col=150)
+
+# create pdf
+pdf(file = paste(figure_dir, "WL_matrix_wtd.pdf", sep="/"), width=9.9603, height=9.614)
+pheatmap(as.matrix(taxon.test.wtd), treeheight_row=150, treeheight_col=150)
+dev.off()
+
 ```
 
-* lets take a look at the `dune` data again,  looks about the same
+* lets take a look at the Dune data again, looks about the same
 
-```{r}
+```{r fig.width=16, fig.height=10}
 # calculate the taxonomic distance
-taxdis <- my_taxa2dist(dune.taxon, check=FALSE, varstep=FALSE, wtd=TRUE)
+dune.taxdis.wtd <- my_taxa2dist(dune.taxon, check=FALSE, varstep=FALSE, wtd=TRUE)
 # plot the tree
-taxontree_wtd <- hclust(taxdis)
-par(mfrow=c(2,1))
-plot(taxontree)
-plot(taxontree_wtd)
-par(mfrow=c(2,1))
-mod <- taxondive(dune, taxdis)
+dune.taxontree.wtd <- hclust(dune.taxdis.wtd)
+par(mfrow=c(1,2))
+plot(dune.taxontree, main="Dune (Original)")
+plot(dune.taxontree.wtd, main="Dune (WTD)" )
+par(mfrow=c(1,1))
+
+# create pdf
+pdf(file = paste(figure_dir, "dune_wtd_compare.pdf", sep="/"), width=16, height=10)
+par(mfrow=c(1,2))
+plot(dune.taxontree, main="Dune (Original)")
+plot(dune.taxontree.wtd, main="Dune (WTD)" )
+par(mfrow=c(1,1))
+dev.off()
+
+mod <- taxondive(dune, dune.taxdis.wtd)
 summary(mod)
-mod2 <- taxondive(dune2, taxdis)
-summary(mod2)
 ```
 
-## Development of a pathway parcer
+## Taxonomy and Pathways from MetaPathways
+
+* Slightly modified MetaPathways utility script `extract_pathway_table_from_pgdb.pl` that produces long-table output labeling pathways and reacations
+* wrote `scripts/link_refseq_taxa_to_pwy.py` to combine output of pathways in metapathways with parsedblast and RPKM values
+
+```
+# Run Pathway Tools in API mode
+./pathway-tools/pathway-tools -api
+
+# navigate to the scripts directory 
+cd .../scripts/
+
+# Extract pathways
+./extract_LTSP_WL_pwys.sh
+
+# Calculate LCA and prepare pathway taxonomies
+./run_link_refseq_taxa_to_pathway.sh
+```
+
+## Diversity of William's Lake
+
+In order to calculate the disveristy measures, we need to create a distance matrix and a sample by taxa abundance matrix. To do this we will parse all the extract taxonomies and create a non-redunant list of taxonmies, and then use these to create the distance matrix for our samples using the WTD. From here we construct two sample by taxa abundance matricies; the first based on the raw ORF counts, and the second based on the RPKM normalized abundance measure. In both cases we show that the taxonomic diveristy and distinctness measures, delta* and delta+, show a strong positive correlation with depth in the Natural samples, while the treated samples show no clear or negative correlations.
+
+* Various functions for creating properly formatted taxa matrix from partial taxonomies for `my_taxa2dist()`
 
 ```{r}
-df <- read.table("data/a26980-scaffolds.long.pwy.taxa.txt.gz", header=TRUE, sep="\t",
-                 colClasses= c('character', 'character', 'character', 'character', 'character',
-                               'numeric', 'numeric', 'numeric', 'character', 'character'),quote = "")
-
-# dt <- fread('data/a26980-scaffolds.long.pwy.taxa.txt', sep="\t", header=TRUE)
-
-
+# fills in the rest of the NA
 create_rows <- function(x, max) {
   c(x, rep(NA, max - length(x)))
 }
 
-test_taxa2 <- unique(df$TAXONOMY)
-
+# creates dataframe delimiting the taxonomy hierarchy
 create_taxa_df <- function(x) {
   split_taxa <- sapply(x, strsplit, ";")
   lengths <- sapply(split_taxa, length)
@@ -271,128 +239,251 @@ create_taxa_df <- function(x) {
   taxa_df[is.na(taxa_df)] <- "unclassified"
   return(taxa_df)
 }
-
-split_taxa <- sapply(test_taxa2, strsplit, ";")
-lengths <- sapply(split_taxa, length)
-max_length <- max(lengths)
-
-
-test_df <- create_taxa_df(test_taxa2)
-taxdis <- my_taxa2dist(test_df, check=FALSE, varstep=FALSE, wtd=TRUE)
-taxadis_matrix <- as.matrix(taxdis)
-test_tree<- hclust(taxdis)
-plot(test_tree)
 ```
 
+* Create a non-redundant list of unique taxonomies for each of the annotations
 
-```{r}
-# create matrix of taxonomies
-pwy_taxa_files <- list.files("data/pwy_taxa/", pattern="*taxa.txt.gz")
-rdata_files <- list.files("data/pwy_taxa/", pattern="*.Rdata")
-setwd("data/pwy_taxa/")
+```{r cache=TRUE}
+pwy_taxa_dir <- paste(wd, "data/pwy_taxa/", sep="/")
+temp_dir <- paste(wd, "data", "temp", sep="/")
 
-create_rows <- function(x, max) {
-  c(x, rep(NA, max - length(x)))
+# select files from the pwy_taxa_dir
+pwy_taxa_files <- list.files(pwy_taxa_dir, pattern="*taxa.txt.gz")
+rdata_files <- list.files(temp_dir, pattern="*.Rdata")
+
+# create non-redundant list of taxonomies for all samples
+nr_taxa_list <- c()
+if(!("nr_taxa_list.Rdata" %in% rdata_files)) { 
+  for (pt_file in pwy_taxa_files) {
+    print(pt_file)
+    df <- read.table(paste(pwy_taxa_dir, pt_file, sep="/"), header=TRUE, sep="\t",
+                   colClasses= c('character', 'character', 'character', 'character', 'character',
+                                 'numeric', 'numeric', 'numeric', 'character', 'character', 'numeric'), quote = "")
+    my_taxa <- unique(df$TAXONOMY)
+    nr_taxa_list <- c(nr_taxa_list, my_taxa)
+  }
+  # save to disk
+  nr_taxa_list <- unique(nr_taxa_list)
+  save(nr_taxa_list, file=paste(temp_dir, "nr_taxa_list.Rdata", sep="/"))
+} else {
+  load(paste(temp_dir, "nr_taxa_list.Rdata", sep="/"))
 }
+```
 
-create_taxa_df <- function(x) {
-  split_taxa <- sapply(x, strsplit, ";")
+* Construct the WTD distance matrix from these annotations
+
+```{r cache=TRUE}
+if(!("taxdis.Rdata" %in% rdata_files)) { 
+  nr_taxa_list <- unique(nr_taxa_list)
+  split_taxa <- sapply(nr_taxa_list, strsplit, ";")
   lengths <- sapply(split_taxa, length)
   max_length <- max(lengths)
-  rows <- lapply(split_taxa, create_rows, max_length)
-  rows <- lapply(rows, rev) # reverse rows
-  taxa_df <- t(data.frame(rows))
-  row.names(taxa_df) <- x
-  taxa_df[is.na(taxa_df)] <- "unclassified"
-  return(taxa_df)
-}
-
-test_taxa2 <- c()
-for (pt_file in pwy_taxa_files) {
-  print(pt_file)
-  df <- read.table(pt_file, header=TRUE, sep="\t",
-                 colClasses= c('character', 'character', 'character', 'character', 'character',
-                               'numeric', 'numeric', 'numeric', 'character', 'character'),quote = "")
-  my_taxa <- unique(df$TAXONOMY)
-  test_taxa2 <- c(test_taxa2, my_taxa)
-}
-
-# construct distance matrix
-if("taxdis.Rdata" %in% rdata_files) { 
-  test_taxa2 <- unique(test_taxa2)
-  split_taxa <- sapply(test_taxa2, strsplit, ";")
-  lengths <- sapply(split_taxa, length)
-  max_length <- max(lengths)
-  test_df <- create_taxa_df(test_taxa2)
+  test_df <- create_taxa_df(nr_taxa_list)
   taxdis <- my_taxa2dist(test_df, check=FALSE, varstep=FALSE, wtd=TRUE)
 
   # save to disk
-  save(taxdis, file="taxdis.Rdata")
+  save(taxdis, file=paste(temp_dir, "taxdis.Rdata", sep="/"))
 } else {
-  load("taxdis.Rdata")
+  load(paste(temp_dir, "taxdis.Rdata", sep="/"))
 }
-
-# construct sample by taxa matrix
-sample_taxa_matrix <- NULL
-for (pt_file in pwy_taxa_files) {
-  print(pt_file)
-  df <- read.table(pt_file, header=TRUE, sep="\t",
-                 colClasses= c('character', 'character', 'character', 'character', 'character',
-                               'numeric', 'numeric', 'numeric', 'character', 'character'),quote = "")
-  my_row <- table(df$TAXONOMY)[test_taxa2]
-  my_row[is.na(my_row)] <- 0
-  sample_taxa_matrix <- rbind(sample_taxa_matrix,my_row)
-}
-
-# set sample as row_names
-colnames(sample_taxa_matrix) <- test_taxa2
-row.names(sample_taxa_matrix) <- sub("-scaffolds.long.pwy.taxa.txt.gz", "", pwy_taxa_files)
-
-# calculate taxonomic diversity
-diversity_result <- taxondive(sample_taxa_matrix, taxdis)
-res <- summary(diversity_result)
 ```
 
+* Construct the sample by taxa matrix (ORF counts)
 
 ```{r}
-setwd("~/Dropbox/projects/TaxonomicVariance/data/")
-meta_df <- read.table("LTSP_WL_MappingandInfo_clean.csv", sep=",", header=TRUE)
-res_matrix <- as.matrix(res)
-res_matrix <- cbind(res_matrix[-nrow(res_matrix),], as.matrix(meta_df[-24,])) # combine with df
-master_df <- data.frame(delta=as.numeric(res_matrix[,1]),
-           delta_star=as.numeric(res_matrix[,2]),
-           delta_plus=as.numeric(res_matrix[,3]),
-           delta_plus_sd=as.numeric(res_matrix[,4]),
-           delta_plus_z=as.numeric(res_matrix[,5]),
-           delta_plus_pr=as.numeric(res_matrix[,6]),
-           horizon=as.character(res_matrix[,8]),
-           treatment=as.character(res_matrix[,9]),
-           depth=as.numeric(res_matrix[,10]),
-           pH=as.numeric(res_matrix[,11]),
-           totalC_percent=as.numeric(res_matrix[,12]),
-           totalN_percent=as.numeric(res_matrix[,13]),
-           totalorganicN_ppm=as.numeric(res_matrix[,14]),
-           nh4_ppm=as.numeric(res_matrix[,15]),
-           no3_ppm=as.numeric(res_matrix[,16]))
+sample_taxa_matrix_orfs <- NULL
+if(!("sample_taxa_matrix_orfs.Rdata" %in% rdata_files)) { 
+  for (pt_file in pwy_taxa_files) {
+    print(pt_file)
+    df <- read.table(paste(pwy_taxa_dir, pt_file, sep="/"), header=TRUE, sep="\t",
+                    colClasses= c('character', 'character', 'character', 'character', 'character',
+                                  'numeric', 'numeric', 'numeric', 'character', 'character', 'numeric'), quote = "")
+    my_row <- table(df$TAXONOMY)[nr_taxa_list]
+    my_row[is.na(my_row)] <- 0
+    sample_taxa_matrix_orfs <- rbind(sample_taxa_matrix_orfs,my_row)
+  }
+  # set sample as row_names
+  colnames(sample_taxa_matrix_orfs) <- nr_taxa_list
+  row.names(sample_taxa_matrix_orfs) <- sub("-scaffolds.long.pwy.taxa.txt.gz", "", pwy_taxa_files)
+  
+  save(sample_taxa_matrix_orfs, file=paste(temp_dir, "sample_taxa_matrix_orfs.Rdata", sep="/"))
+} else {
+  load(paste(temp_dir, "sample_taxa_matrix_orfs.Rdata", sep="/"))
+}
+```
 
+* Calculate the diversity scores (ORFs)
+
+```{r}
+if(!("diversity_result_orfs.Rdata" %in% rdata_files)) { 
+  diversity_result_orfs <- taxondive(sample_taxa_matrix_orfs, taxdis)
+  save(diversity_result_orfs, file=paste(temp_dir, "diversity_result_orfs.Rdata", sep="/"))
+} else {
+  load(paste(temp_dir, "diversity_result_orfs.Rdata", sep="/"))
+}
+div_res_orfs <- summary(diversity_result_orfs)
+div_res_orfs
+```
+
+* Load the William's Lake metadata
+
+```{r}
+wl_meta_df <- read.table(paste(wd, "data", "LTSP_WL_MappingandInfo_clean.csv", sep="/"), sep=",", header=TRUE)
+```
+
+* Create summary Data Frame (ORFs)
+
+```{r}
+div_res_orfs_matrix <- as.matrix(div_res_orfs)
+div_res_orfs_matrix <- cbind(div_res_orfs_matrix[-nrow(div_res_orfs_matrix),], as.matrix(wl_meta_df)) # combine with df
+master_df_orfs <- data.frame(delta=as.numeric(div_res_orfs_matrix[,1]),
+           delta_star=as.numeric(div_res_orfs_matrix[,2]),
+           delta_plus=as.numeric(div_res_orfs_matrix[,3]),
+           delta_plus_sd=as.numeric(div_res_orfs_matrix[,4]),
+           delta_plus_z=as.numeric(div_res_orfs_matrix[,5]),
+           delta_plus_pr=as.numeric(div_res_orfs_matrix[,6]),
+           horizon=as.character(div_res_orfs_matrix[,8]),
+           treatment=as.character(div_res_orfs_matrix[,9]),
+           depth=as.numeric(div_res_orfs_matrix[,10]),
+           pH=as.numeric(div_res_orfs_matrix[,11]),
+           totalC_percent=as.numeric(div_res_orfs_matrix[,12]),
+           totalN_percent=as.numeric(div_res_orfs_matrix[,13]),
+           totalorganicN_ppm=as.numeric(div_res_orfs_matrix[,14]),
+           nh4_ppm=as.numeric(div_res_orfs_matrix[,15]),
+           no3_ppm=as.numeric(div_res_orfs_matrix[,16]))
+```
+
+* Depth (cm) by taxonomic diversity (ORFs)
+
+```{r fig.width=9.832, fig.height=4.399}
 library(ggplot2)
 library(reshape2)
 
-
-# delta_star (ORF count)
-ggplot(master_df, aes(x=depth, y=delta_star)) + geom_smooth(formula=y ~ x, method="glm", size=1.5, color="light blue", fill="light blue") + geom_smooth(size=1.5, color="salmon", fill="salmon") + geom_point(size=3.5, aes(col=treatment)) + theme_bw()
-ggplot(master_df, aes(x=depth, y=delta_star)) + geom_smooth(formula=y ~ x, method="glm", size=1.5) + geom_point(size=3.5, aes(col=treatment)) + facet_wrap(~treatment) + theme_bw()
-
-quartz(width=9.832677, height=4.399606)
-ggplot(master_df, aes(x=depth, y=delta_star)) + geom_smooth(method="glm", size=1.5) + geom_point(size=3.5, aes(col=horizon)) + theme_bw() + facet_wrap(~treatment)
-
-# delta plus
-quartz(width=9.832677, height=4.399606)
-ggplot(master_df, aes(x=depth, y=delta_plus)) + geom_smooth(formula=y ~ x, method="glm", size=1.5) + geom_point(size=3.5, aes(col=horizon)) + facet_wrap(~treatment) + theme_bw()
-
-melt(master_df)
-plot(as.numeric(as.character(master_df$depth_cm)), as.numeric(as.character(master_df[,"Delta*"])), col=master_df$Horizon)
-plot(as.numeric(as.character(master_df$depth_cm)), as.numeric(as.character(master_df[,"Delta+"])), col=master_df$Horizon)
-
-melt(as.data.frame(master_df))
+p <- ggplot(master_df_orfs, aes(x=depth, y=delta_star)) 
+p <- p + geom_smooth(method="glm", size=1.5) 
+p <- p + geom_point(size=3.5, aes(col=horizon)) 
+p <- p + theme_bw() 
+p <- p+ facet_wrap(~treatment)
+p
+pdf(file = paste(figure_dir, "wl_delta_star_orfs.pdf", sep="/"), width=9.832, height=4.399)
+p
+dev.off()
 ```
+
+```{r fig.width=9.832, fig.height=4.399}
+# delta plus (ORF count)
+# quartz(width=9.832677, height=4.399606)
+p <- ggplot(master_df_orfs, aes(x=depth, y=delta_plus)) 
+p <- p + geom_smooth(formula=y ~ x, method="glm", size=1.5) 
+p <- p + geom_point(size=3.5, aes(col=horizon)) 
+p <- p + facet_wrap(~treatment) 
+p <- p + theme_bw()
+p
+pdf(file = paste(figure_dir, "wl_delta_plus_orfs.pdf", sep="/"), width=9.832, height=4.399)
+p
+dev.off()
+```
+
+* Construct the sample by taxa matrix (RPKM)
+
+```{r}
+# construct new sample-taxa matrix with RPKM
+library(dplyr)
+
+div_res_rpkm_matrix <- NULL
+if(!("div_res_rpkm_matrix.Rdata" %in% rdata_files)) { 
+  for (pt_file in pwy_taxa_files) {
+    print(pt_file)
+    df <- read.table(paste(pwy_taxa_dir, pt_file, sep="/"), header=TRUE, sep="\t",
+                   colClasses= c('character', 'character', 'character', 'character', 'character',
+                                 'numeric', 'numeric', 'numeric', 'character', 'character', 'numeric'), quote = "")
+    
+    res <- df %>% 
+    select(TAXONOMY, RPKM) %>%
+    group_by(TAXONOMY) %>% 
+    summarize( rpkm=sum(RPKM) )
+    
+    my_row <- res$rpkm
+    names(my_row) <- res$TAXONOMY
+    my_row <- my_row[nr_taxa_list]
+    my_row[is.na(my_row)] <- 0
+    div_res_rpkm_matrix <- rbind(div_res_rpkm_matrix,my_row)
+  }
+  
+  # set sample as row_names
+  colnames(div_res_rpkm_matrix) <- nr_taxa_list
+  row.names(div_res_rpkm_matrix) <- sub("-scaffolds.long.pwy.taxa.txt.gz", "", pwy_taxa_files)
+  
+  save(div_res_rpkm_matrix, file=paste(temp_dir, "div_res_rpkm_matrix.Rdata", sep="/"))
+} else {
+  load(paste(temp_dir, "div_res_rpkm_matrix.Rdata", sep="/"))
+}
+```
+
+* RPKM diversity results
+
+```{r}
+# calculate taxonomic diversity
+if(!("diversity_result_rpkm.Rdata" %in% rdata_files)) { 
+  diversity_result_rpkm <- taxondive(div_res_rpkm_matrix, taxdis)
+  save(diversity_result_rpkm, file=paste(temp_dir, "diversity_result_rpkm.Rdata", sep="/"))
+} else {
+  load(paste(temp_dir, "diversity_result_rpkm.Rdata", sep="/"))
+}
+div_res_rpkm <- summary(diversity_result_rpkm)
+div_res_rpkm
+```
+
+* RPKM result matrix
+
+```{r}
+res_matrix_rpkm <- as.matrix(div_res_rpkm)
+res_matrix_rpkm <- cbind(res_matrix_rpkm[-nrow(res_matrix_rpkm),], as.matrix(wl_meta_df)) # combine with df
+master_df_rpkm <- data.frame(delta=as.numeric(res_matrix_rpkm[,1]),
+           delta_star=as.numeric(res_matrix_rpkm[,2]),
+           delta_plus=as.numeric(res_matrix_rpkm[,3]),
+           delta_plus_sd=as.numeric(res_matrix_rpkm[,4]),
+           delta_plus_z=as.numeric(res_matrix_rpkm[,5]),
+           delta_plus_pr=as.numeric(res_matrix_rpkm[,6]),
+           horizon=as.character(res_matrix_rpkm[,8]),
+           treatment=as.character(res_matrix_rpkm[,9]),
+           depth=as.numeric(res_matrix_rpkm[,10]),
+           pH=as.numeric(res_matrix_rpkm[,11]),
+           totalC_percent=as.numeric(res_matrix_rpkm[,12]),
+           totalN_percent=as.numeric(res_matrix_rpkm[,13]),
+           totalorganicN_ppm=as.numeric(res_matrix_rpkm[,14]),
+           nh4_ppm=as.numeric(res_matrix_rpkm[,15]),
+           no3_ppm=as.numeric(res_matrix_rpkm[,16]))
+```
+
+* Depth by taxonomic diversity (RPKM)
+
+```{r fig.width=9.832, fig.height=4.399}
+# delta_star (RPKM count)
+p <- ggplot(master_df_rpkm, aes(x=depth, y=delta_star)) 
+p <- p + geom_smooth(method="glm", size=1.5) 
+p <- p + geom_point(size=3.5, aes(col=horizon)) 
+p <- p + theme_bw() 
+p <- p + facet_wrap(~treatment)
+p
+pdf(file = paste(figure_dir, "wl_delta_star_rpkm.pdf", sep="/"), width=9.832, height=4.399)
+p
+dev.off()
+```
+
+```{r fig.width=9.832, height=4.399}
+# delta plus (RPKM count)
+p <- ggplot(master_df_rpkm, aes(x=depth, y=delta_plus)) 
+p <- p + geom_smooth(formula=y ~ x, method="glm", size=1.5) 
+p <- p + geom_point(size=3.5, aes(col=horizon)) 
+p <- p + facet_wrap(~treatment) 
+p <- p + theme_bw()
+p
+pdf(file = paste(figure_dir, "wl_delta_plus_rpkm.pdf", sep="/"), width=9.832, height=4.399)
+p
+dev.off()
+```
+
+# References
+
+Section for work cited.

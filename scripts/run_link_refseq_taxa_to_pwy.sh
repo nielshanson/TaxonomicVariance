@@ -30,19 +30,21 @@ a27004-scaffolds
 a27005-scaffolds 
 )
 
+# location of important directories
 annotation_dir=/Users/nielsh/Dropbox/projects/TaxonomicVariance/annotations
 python_resources=/Users/nielsh/Dropbox/projects/TaxonomicVariance/scripts/python_resources
 output_dir=/Users/nielsh/Dropbox/projects/TaxonomicVariance/data/pwy_taxa
 
-
-
+# create table for each sample
 for sample in ${samples[@]}
 do
-  echo python2.7 link_refseq_taxa_to_pwy.py --parsed_blast ${annotation_dir}/${sample}.refseq-nr-2014-01-18.LASTout.parsed.txt.gz \
+  python2.7 link_refseq_taxa_to_pwy.py --parsed_blast ${annotation_dir}/${sample}.refseq-nr-2014-01-18.LASTout.parsed.txt.gz \
                                             --pwy_long ${annotation_dir}/${sample}.long.pwy.txt.gz \
                                             --ncbi_tree ${python_resources}/ncbi_taxonomy_tree.txt \
                                             --megan_names ${python_resources}/ncbi.map \
                                             -o ${output_dir}/${sample}.long.pwy.taxa.txt \
-                                            --lca
+                                            --lca \
+                                            --rpkm ${annotation_dir}/${sample}.orf_rpkm.txt.gz
+
 done
 

@@ -509,9 +509,11 @@ class LCAStar(object):
                 try:
                     self.id_to_H[id] = -(self.id_to_L[id]/self.id_to_S[id] - log(self.id_to_S[id]))
                 except:
+                    # some kind of problem, return default value
                     print "ID: " + str(id)
                     print read_name_counts
-                    exit(-1)
+                    candidate = ['1', 10000000.00 ]
+                    return candidate
                 if self.id_to_S[id] > Total*self.lca_star_alpha:
                     if candidate[1] > self.id_to_H[id]:
                         candidate[0] = id

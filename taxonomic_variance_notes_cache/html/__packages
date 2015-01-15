@@ -1,0 +1,11 @@
+base
+data.table
+dplyr
+ggplot2
+lattice
+permute
+pheatmap
+plyr
+RColorBrewer
+reshape2
+vegan
