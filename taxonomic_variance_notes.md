@@ -1,6 +1,6 @@
 # Taxonomic Diveristy and Distinctness Measures Applied to William's Lake Soil Metagenomes
 Niels Hanson, Aria Hahn  
-`r format(Sys.time(), '%B %d, %Y')`  
+January 16, 2015  
 
 
 
@@ -73,48 +73,48 @@ dune.taxontree <- hclust(dune.taxdis)
 plot(dune.taxontree)
 ```
 
-![plot of chunk unnamed-chunk-4](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-4.png) 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-4-1.png) 
 
 * Plotting the matrix as a heatmap will show the structure in more detail
 
 
 ```r
-pheatmap(taxdis, treeheight_row=150, treeheight_col=150)
+pheatmap(dune.taxdis, treeheight_row=150, treeheight_col=150)
 ```
 
-![plot of chunk unnamed-chunk-5](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-5.png) 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-5-1.png) 
 
 * Vegan's implementation of the taxonomic distance
 
 
 ```r
-mod <- taxondive(dune, taxdis)
+mod <- taxondive(dune, dune.taxdis)
 summary(mod)
 ```
 
 ```
-##          Delta Delta* Delta+ sd(Delta+) z(Delta+) Pr(>|z|)  
-## 2        51.65  56.65  56.86       5.55     -2.07    0.038 *
-## 13       46.46  52.87  66.74       5.55     -0.29    0.771  
-## 4        48.76  52.93  64.51       4.10     -0.94    0.348  
-## 16       50.41  57.99  65.99       7.09     -0.33    0.739  
-## 6        68.30  74.30  71.52       4.98      0.63    0.526  
-## 1        12.89  16.57  40.95      11.85     -2.31    0.021 *
-## 8        50.24  53.91  66.62       4.51     -0.38    0.700  
-## 5        62.90  67.22  68.13       3.74     -0.06    0.953  
-## 17       55.81  62.34  60.32       8.20     -0.98    0.327  
-## 15       69.55  78.21  78.46       7.09      1.42    0.154  
-## 10       60.32  65.23  68.54       4.51      0.04    0.966  
-## 11       68.23  76.22  70.72       6.23      0.38    0.704  
-## 9        47.98  51.39  62.68       4.10     -1.38    0.166  
-## 18       67.96  75.97  69.31       6.23      0.15    0.878  
-## 3        35.92  39.85  62.22       5.55     -1.11    0.269  
-## 20       72.63  80.99  81.63       7.09      1.87    0.061 .
-## 14       71.22  81.90  79.06       8.20      1.31    0.192  
-## 19       62.70  69.42  71.25       6.23      0.47    0.642  
-## 12       62.72  70.15  74.60       6.23      1.00    0.316  
-## 7        61.94  66.54  69.68       4.10      0.32    0.746  
-## Expected 64.58  61.84  68.35                                
+##            Delta  Delta*  Delta+ sd(Delta+) z(Delta+) Pr(>|z|)   
+## 1        25.0089 32.1543 51.5455     9.5637   -2.8405 0.004504 **
+## 2        60.4931 66.3497 66.6869     4.6664   -2.5769 0.009970 **
+## 3        46.5985 51.7024 70.7475     4.6664   -1.7067 0.087881 . 
+## 4        58.1988 63.1763 73.4033     3.5073   -1.5135 0.130150   
+## 5        72.0452 76.9903 77.6024     3.2187   -0.3446 0.730386   
+## 6        76.4148 83.1205 80.8430     4.2170    0.5054 0.613259   
+## 7        70.2500 75.4752 78.3974     3.5073   -0.0896 0.928626   
+## 8        59.1259 63.4363 74.7865     3.8361   -1.0232 0.306220   
+## 9        56.9481 60.9854 71.1597     3.5073   -2.1532 0.031303 * 
+## 10       68.9021 74.5133 77.7617     3.8361   -0.2476 0.804432   
+## 11       76.2014 85.1259 82.5379     5.2089    0.7346 0.462605   
+## 12       69.5554 77.7922 82.6136     5.2089    0.7491 0.453792   
+## 13       55.2961 62.9232 76.6566     4.6664   -0.4404 0.659657   
+## 14       77.6087 89.2500 88.1818     6.7459    1.4039 0.160362   
+## 15       74.9245 84.2485 86.5584     5.8818    1.3341 0.182178   
+## 16       57.8435 66.5389 73.3604     5.8818   -0.9098 0.362936   
+## 17       64.8225 72.4081 70.9740     6.7459   -1.1470 0.251377   
+## 18       76.7314 85.7730 81.4015     5.2089    0.5164 0.605570   
+## 19       73.4487 81.3182 83.3712     5.2089    0.8945 0.371029   
+## 20       78.0762 87.0634 87.9221     5.8818    1.5659 0.117368   
+## Expected 73.2888 70.1816 78.7116                                 
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -135,7 +135,7 @@ taxontree <- hclust(taxon.test.matrix)
 plot(taxontree)
 ```
 
-![plot of chunk unnamed-chunk-8](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-8.png) 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-8-1.png) 
 
 * Structure with number of distinct class step lengths.
 
@@ -144,11 +144,11 @@ plot(taxontree)
 pheatmap(taxon.test.matrix, treeheight_row=150, treeheight_col=150)
 ```
 
-![plot of chunk unnamed-chunk-9](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-9.png) 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-9-1.png) 
 
 ```r
 pdf(file = paste(figure_dir, "WL_matrix_class_step.pdf", sep="/"), width=12, height=12)
-pheatmap(as.matrix(taxon.test.wtd), treeheight_row=150, treeheight_col=150)
+pheatmap(as.matrix(taxon.test.matrix), treeheight_row=150, treeheight_col=150)
 dev.off()
 ```
 
@@ -166,7 +166,7 @@ taxontree2 <- hclust(taxon.test.matrix2)
 plot(taxontree2)
 ```
 
-![plot of chunk unnamed-chunk-10](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-10.png) 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-10-1.png) 
 
 * Structure with uniform step lengths.
 
@@ -175,7 +175,7 @@ plot(taxontree2)
 pheatmap(taxon.test.matrix2, treeheight_row=150, treeheight_col=150)
 ```
 
-![plot of chunk unnamed-chunk-11](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-11.png) 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-11-1.png) 
 
 ## Implementing WTD and Partial Taxonomy
 
@@ -200,9 +200,9 @@ simple_test1_dist
 ```
 
 ```
-##         A;B;C;D A;B;E;-
-## A;B;E;-   16.13        
-## A;F;-;-   35.48   32.26
+##          A;B;C;D  A;B;E;-
+## A;B;E;- 16.12903         
+## A;F;-;- 35.48387 32.25806
 ```
 
 * plot the simple tree
@@ -212,7 +212,7 @@ simple_test1_dist
 plot(hclust(simple_test1_dist))
 ```
 
-![plot of chunk unnamed-chunk-14](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-14.png) 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-14-1.png) 
 
 * We'll do another quick test with the LTSP data
 
@@ -222,7 +222,7 @@ taxon.test.wtd <- my_taxa2dist(taxon.test, check=FALSE, wtd=TRUE)
 pheatmap(as.matrix(taxon.test.wtd), treeheight_row=150, treeheight_col=150)
 ```
 
-![plot of chunk unnamed-chunk-15](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-15.png) 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-15-1.png) 
 
 ```r
 # create pdf
@@ -245,7 +245,8 @@ dune.taxdis.wtd <- my_taxa2dist(dune.taxon, check=FALSE, varstep=FALSE, wtd=TRUE
 ```
 
 ```
-## Warning: you used 'check=FALSE' and some distances are zero -- was this
+## Warning in my_taxa2dist(dune.taxon, check = FALSE, varstep = FALSE, wtd =
+## TRUE): you used 'check=FALSE' and some distances are zero -- was this
 ## intended?
 ```
 
@@ -257,7 +258,7 @@ plot(dune.taxontree, main="Dune (Original)")
 plot(dune.taxontree.wtd, main="Dune (WTD)" )
 ```
 
-![plot of chunk unnamed-chunk-16](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-16.png) 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-16-1.png) 
 
 ```r
 par(mfrow=c(1,1))
@@ -282,28 +283,28 @@ summary(mod)
 ```
 
 ```
-##          Delta Delta* Delta+ sd(Delta+) z(Delta+) Pr(>|z|)  
-## 2        51.65  56.65  56.86       5.55     -2.07    0.038 *
-## 13       46.46  52.87  66.74       5.55     -0.29    0.771  
-## 4        48.76  52.93  64.51       4.10     -0.94    0.348  
-## 16       50.41  57.99  65.99       7.09     -0.33    0.739  
-## 6        68.30  74.30  71.52       4.98      0.63    0.526  
-## 1        12.89  16.57  40.95      11.85     -2.31    0.021 *
-## 8        50.24  53.91  66.62       4.51     -0.38    0.700  
-## 5        62.90  67.22  68.13       3.74     -0.06    0.953  
-## 17       55.81  62.34  60.32       8.20     -0.98    0.327  
-## 15       69.55  78.21  78.46       7.09      1.42    0.154  
-## 10       60.32  65.23  68.54       4.51      0.04    0.966  
-## 11       68.23  76.22  70.72       6.23      0.38    0.704  
-## 9        47.98  51.39  62.68       4.10     -1.38    0.166  
-## 18       67.96  75.97  69.31       6.23      0.15    0.878  
-## 3        35.92  39.85  62.22       5.55     -1.11    0.269  
-## 20       72.63  80.99  81.63       7.09      1.87    0.061 .
-## 14       71.22  81.90  79.06       8.20      1.31    0.192  
-## 19       62.70  69.42  71.25       6.23      0.47    0.642  
-## 12       62.72  70.15  74.60       6.23      1.00    0.316  
-## 7        61.94  66.54  69.68       4.10      0.32    0.746  
-## Expected 64.58  61.84  68.35                                
+##            Delta  Delta*  Delta+ sd(Delta+) z(Delta+) Pr(>|z|)  
+## 1        12.8852 16.5666 40.9524    12.2475   -2.1681  0.03015 *
+## 2        51.6454 56.6454 56.8607     5.7431   -1.8536  0.06380 .
+## 3        35.9178 39.8519 62.2222     5.7431   -0.9200  0.35757  
+## 4        48.7606 52.9309 64.5096     4.2466   -0.7056  0.48044  
+## 5        62.8979 67.2152 68.1319     3.8791    0.1614  0.87181  
+## 6        68.3046 74.2986 71.5152     5.1594    0.7771  0.43712  
+## 7        61.3187 65.8796 68.8645     4.2466    0.3199  0.74903  
+## 8        47.2487 50.6932 64.5022     4.6680   -0.6435  0.51991  
+## 9        45.2704 48.4798 60.7245     4.2466   -1.5969  0.11028  
+## 10       60.3175 65.2295 68.5426     4.6680    0.2221  0.82426  
+## 11       68.2284 76.2191 70.7231     6.4524    0.4986  0.61806  
+## 12       61.3579 68.6239 73.5450     6.4524    0.9359  0.34930  
+## 13       44.9495 51.1494 65.6085     5.7431   -0.3304  0.74111  
+## 14       70.4854 81.0582 78.4580     8.4818    1.2912  0.19662  
+## 15       67.1937 75.5556 77.0975     7.3378    1.3071  0.19116  
+## 16       46.3985 53.3734 62.8118     7.3378   -0.6397  0.52236  
+## 17       55.8125 62.3438 60.3175     8.4818   -0.8475  0.39671  
+## 18       67.9600 75.9681 69.3122     6.4524    0.2799  0.77953  
+## 19       62.7001 69.4180 71.2522     6.4524    0.5806  0.56151  
+## 20       71.1043 79.2889 80.2721     7.3378    1.7398  0.08190 .
+## Expected 63.5233 60.8301 67.5059                                
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -327,7 +328,11 @@ cd .../scripts/
 ./run_link_refseq_taxa_to_pathway.sh
 ```
 
-## Diversity of William's Lake
+# Analysis of William's Lake
+
+Here we utilize our implementation to analyze the William's Lake metagenomes by sample and pathway.
+
+## Diversity by Sample
 
 In order to calculate the disveristy measures, we need to create a distance matrix and a sample by taxa abundance matrix. To do this we will parse all the extract taxonomies and create a non-redunant list of taxonmies, and then use these to create the distance matrix for our samples using the WTD. From here we construct two sample by taxa abundance matricies; the first based on the raw ORF counts, and the second based on the RPKM normalized abundance measure. In both cases we show that the taxonomic diveristy and distinctness measures, delta* and delta+, show a strong positive correlation with depth in the Natural samples, while the treated samples show no clear or negative correlations.
 
@@ -428,7 +433,7 @@ if(!("sample_taxa_matrix_orfs.Rdata" %in% rdata_files)) {
 }
 ```
 
-* Calculate the diversity scores (ORFs)
+* Calculate the diversity scores (ORF Counts)
 
 
 ```r
@@ -443,34 +448,34 @@ div_res_orfs
 ```
 
 ```
-##           Delta Delta* Delta+ sd(Delta+) z(Delta+) Pr(>|z|)    
-## a26980   2.7137 3.3003 5.5698     0.1332     -3.76  0.00017 ***
-## a26981   2.8322 3.3505 5.4568     0.0769     -7.98  1.4e-15 ***
-## a26982   2.2138 3.1825 5.7769     0.0972     -3.02  0.00249 ** 
-## a26983   2.2642 3.1552 5.8218     0.0748     -3.33  0.00087 ***
-## a26984   2.7224 3.3286 5.5259     0.1023     -5.32  1.0e-07 ***
-## a26985   2.4068 3.2328 5.7405     0.1304     -2.53  0.01131 *  
-## a26986   2.3286 3.1747 5.7405     0.0803     -4.11  3.9e-05 ***
-## a26987   2.6503 3.3736 5.7304     0.0653     -5.21  1.8e-07 ***
-## a26988   2.7527 3.3767 5.6069     0.0863     -5.38  7.6e-08 ***
-## a26989   2.5469 3.2681 5.7316     0.0683     -4.97  6.9e-07 ***
-## a26990   2.3658 3.1231 5.6100     0.0782     -5.89  3.8e-09 ***
-## a26991   2.5822 3.1533 5.4163     0.1102     -5.94  2.8e-09 ***
-## a26992   2.5182 3.0782 5.2842     0.0819     -9.61  < 2e-16 ***
-## a26993   2.2502 2.8850 5.4312     0.0764     -8.38  < 2e-16 ***
-## a26994   2.2654 2.9682 5.5169     0.0914     -6.06  1.4e-09 ***
-## a26995   2.3344 3.1053 5.6767     0.0892     -4.42  9.8e-06 ***
-## a26996   2.5730 3.2885 5.7104     0.0635     -5.67  1.4e-08 ***
-## a26997   2.6225 3.1627 5.2533     0.0826     -9.90  < 2e-16 ***
-## a26998   2.4263 2.9251 5.2527     0.1080     -7.58  3.5e-14 ***
-## a26999   2.3172 3.0015 5.5851     0.1039     -4.68  2.9e-06 ***
-## a27000   2.3146 3.1123 5.7218     0.0931     -3.75  0.00018 ***
-## a27001   2.6208 3.3211 5.7487     0.0740     -4.35  1.4e-05 ***
-## a27002   2.6328 3.1738 5.4736     0.0891     -6.70  2.0e-11 ***
-## a27003   2.4749 3.1141 5.6398     0.0800     -5.39  7.0e-08 ***
-## a27004   2.2728 2.9853 5.5887     0.1029     -4.69  2.8e-06 ***
-## a27005   2.6018 3.3216 5.7127     0.0753     -4.76  2.0e-06 ***
-## Expected 2.5408 2.5392 6.0709                                  
+##             Delta   Delta*   Delta+ sd(Delta+) z(Delta+)  Pr(>|z|)    
+## a26980   2.713658 3.300335 5.569843   0.133225   -3.7608 0.0001694 ***
+## a26981   2.832185 3.350476 5.456805   0.076916   -7.9836 1.421e-15 ***
+## a26982   2.213846 3.182478 5.776865   0.097220   -3.0242 0.0024932 ** 
+## a26983   2.264232 3.155152 5.821844   0.074784   -3.3300 0.0008685 ***
+## a26984   2.722351 3.328560 5.525936   0.102338   -5.3249 1.010e-07 ***
+## a26985   2.406815 3.232813 5.740493   0.130431   -2.5330 0.0113092 *  
+## a26986   2.328577 3.174704 5.740546   0.080343   -4.1115 3.932e-05 ***
+## a26987   2.650290 3.373605 5.730377   0.065297   -5.2146 1.842e-07 ***
+## a26988   2.752728 3.376664 5.606916   0.086292   -5.3766 7.590e-08 ***
+## a26989   2.546945 3.268091 5.731587   0.068330   -4.9655 6.854e-07 ***
+## a26990   2.365828 3.123147 5.609957   0.078196   -5.8944 3.761e-09 ***
+## a26991   2.582217 3.153291 5.416265   0.110195   -5.9405 2.842e-09 ***
+## a26992   2.518166 3.078194 5.284151   0.081861   -9.6105 < 2.2e-16 ***
+## a26993   2.250203 2.884950 5.431156   0.076353   -8.3784 < 2.2e-16 ***
+## a26994   2.265440 2.968183 5.516938   0.091396   -6.0608 1.354e-09 ***
+## a26995   2.334446 3.105256 5.676712   0.089167   -4.4205 9.848e-06 ***
+## a26996   2.573047 3.288550 5.710418   0.063524   -5.6743 1.392e-08 ***
+## a26997   2.622502 3.162706 5.253316   0.082588   -9.8992 < 2.2e-16 ***
+## a26998   2.426347 2.925116 5.252682   0.107952   -7.5792 3.476e-14 ***
+## a26999   2.317200 3.001527 5.585082   0.103890   -4.6760 2.925e-06 ***
+## a27000   2.314597 3.112346 5.721840   0.093060   -3.7506 0.0001764 ***
+## a27001   2.620753 3.321069 5.748672   0.074039   -4.3518 1.350e-05 ***
+## a27002   2.632780 3.173803 5.473587   0.089111   -6.7027 2.046e-11 ***
+## a27003   2.474919 3.114082 5.639768   0.079971   -5.3908 7.015e-08 ***
+## a27004   2.272844 2.985303 5.588673   0.102924   -4.6851 2.799e-06 ***
+## a27005   2.601804 3.321572 5.712673   0.075330   -4.7551 1.984e-06 ***
+## Expected 2.540804 2.539189 6.070875                                   
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -482,7 +487,7 @@ div_res_orfs
 wl_meta_df <- read.table(paste(wd, "data", "LTSP_WL_MappingandInfo_clean.csv", sep="/"), sep=",", header=TRUE)
 ```
 
-* Create summary Data Frame (ORFs)
+* Create summary Data Frame (ORF Counts)
 
 
 ```r
@@ -505,22 +510,20 @@ master_df_orfs <- data.frame(delta=as.numeric(div_res_orfs_matrix[,1]),
            no3_ppm=as.numeric(div_res_orfs_matrix[,16]))
 ```
 
-* Depth (cm) by taxonomic diversity (ORFs)
+* Depth (cm) by taxonomic diversity (ORF Counts)
 
 
 ```r
-library(ggplot2)
-library(reshape2)
-
 p <- ggplot(master_df_orfs, aes(x=depth, y=delta_star)) 
 p <- p + geom_smooth(method="glm", size=1.5) 
 p <- p + geom_point(size=3.5, aes(col=horizon)) 
 p <- p + theme_bw() 
-p <- p+ facet_wrap(~treatment)
+p <- p + facet_wrap(~treatment)
+p <- p + ggtitle("Williams Lake (ORF Counts)")
 p
 ```
 
-![plot of chunk unnamed-chunk-24](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-24.png) 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-24-1.png) 
 
 ```r
 pdf(file = paste(figure_dir, "wl_delta_star_orfs.pdf", sep="/"), width=9.832, height=4.399)
@@ -542,10 +545,11 @@ p <- p + geom_smooth(formula=y ~ x, method="glm", size=1.5)
 p <- p + geom_point(size=3.5, aes(col=horizon)) 
 p <- p + facet_wrap(~treatment) 
 p <- p + theme_bw()
+p <- p + ggtitle("Williams Lake (ORF Counts)")
 p
 ```
 
-![plot of chunk unnamed-chunk-25](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-25.png) 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-25-1.png) 
 
 ```r
 pdf(file = paste(figure_dir, "wl_delta_plus_orfs.pdf", sep="/"), width=9.832, height=4.399)
@@ -562,9 +566,6 @@ dev.off()
 
 
 ```r
-# construct new sample-taxa matrix with RPKM
-library(dplyr)
-
 div_res_rpkm_matrix <- NULL
 if(!("div_res_rpkm_matrix.Rdata" %in% rdata_files)) { 
   for (pt_file in pwy_taxa_files) {
@@ -599,7 +600,6 @@ if(!("div_res_rpkm_matrix.Rdata" %in% rdata_files)) {
 
 
 ```r
-# calculate taxonomic diversity
 if(!("diversity_result_rpkm.Rdata" %in% rdata_files)) { 
   diversity_result_rpkm <- taxondive(div_res_rpkm_matrix, taxdis)
   save(diversity_result_rpkm, file=paste(temp_dir, "diversity_result_rpkm.Rdata", sep="/"))
@@ -611,34 +611,34 @@ div_res_rpkm
 ```
 
 ```
-##           Delta Delta* Delta+ sd(Delta+) z(Delta+) Pr(>|z|)    
-## a26980   2.7582 3.3028 5.5698     0.1332     -3.76  0.00017 ***
-## a26981   2.8108 3.3022 5.4568     0.0769     -7.98  1.4e-15 ***
-## a26982   2.2080 3.1538 5.7769     0.0972     -3.02  0.00249 ** 
-## a26983   2.2419 3.1257 5.8218     0.0748     -3.33  0.00087 ***
-## a26984   2.7352 3.3050 5.5259     0.1023     -5.32  1.0e-07 ***
-## a26985   2.3921 3.1079 5.7405     0.1304     -2.53  0.01131 *  
-## a26986   2.3291 3.1348 5.7405     0.0803     -4.11  3.9e-05 ***
-## a26987   2.6487 3.3712 5.7304     0.0653     -5.21  1.8e-07 ***
-## a26988   2.7922 3.3563 5.6069     0.0863     -5.38  7.6e-08 ***
-## a26989   2.4247 3.1585 5.7316     0.0683     -4.97  6.9e-07 ***
-## a26990   2.5966 3.2776 5.6100     0.0782     -5.89  3.8e-09 ***
-## a26991   2.4665 2.9562 5.4163     0.1102     -5.94  2.8e-09 ***
-## a26992   2.4386 2.9274 5.2842     0.0819     -9.61  < 2e-16 ***
-## a26993   2.1641 2.7446 5.4312     0.0764     -8.38  < 2e-16 ***
-## a26994   2.1975 2.8209 5.5169     0.0914     -6.06  1.4e-09 ***
-## a26995   2.3287 3.0695 5.6767     0.0892     -4.42  9.8e-06 ***
-## a26996   2.5683 3.2973 5.7104     0.0635     -5.67  1.4e-08 ***
-## a26997   2.6106 3.1063 5.2533     0.0826     -9.90  < 2e-16 ***
-## a26998   2.2570 2.7026 5.2527     0.1080     -7.58  3.5e-14 ***
-## a26999   2.2697 2.9213 5.5851     0.1039     -4.68  2.9e-06 ***
-## a27000   2.2876 3.0769 5.7218     0.0931     -3.75  0.00018 ***
-## a27001   2.5933 3.2820 5.7487     0.0740     -4.35  1.4e-05 ***
-## a27002   2.5713 3.0820 5.4736     0.0891     -6.70  2.0e-11 ***
-## a27003   2.3883 2.9823 5.6398     0.0800     -5.39  7.0e-08 ***
-## a27004   2.2312 2.8925 5.5887     0.1029     -4.69  2.8e-06 ***
-## a27005   2.5522 3.3316 5.7127     0.0753     -4.76  2.0e-06 ***
-## Expected 2.5189 2.5177 6.0709                                  
+##             Delta   Delta*   Delta+ sd(Delta+) z(Delta+)  Pr(>|z|)    
+## a26980   2.758167 3.302781 5.569843   0.133225   -3.7608 0.0001694 ***
+## a26981   2.810832 3.302222 5.456805   0.076916   -7.9836 1.421e-15 ***
+## a26982   2.207982 3.153793 5.776865   0.097220   -3.0242 0.0024932 ** 
+## a26983   2.241932 3.125682 5.821844   0.074784   -3.3300 0.0008685 ***
+## a26984   2.735179 3.305028 5.525936   0.102338   -5.3249 1.010e-07 ***
+## a26985   2.392132 3.107883 5.740493   0.130431   -2.5330 0.0113092 *  
+## a26986   2.329099 3.134762 5.740546   0.080343   -4.1115 3.932e-05 ***
+## a26987   2.648708 3.371166 5.730377   0.065297   -5.2146 1.842e-07 ***
+## a26988   2.792178 3.356256 5.606916   0.086292   -5.3766 7.590e-08 ***
+## a26989   2.424724 3.158521 5.731587   0.068330   -4.9655 6.854e-07 ***
+## a26990   2.596629 3.277595 5.609957   0.078196   -5.8944 3.761e-09 ***
+## a26991   2.466538 2.956193 5.416265   0.110195   -5.9405 2.842e-09 ***
+## a26992   2.438620 2.927395 5.284151   0.081861   -9.6105 < 2.2e-16 ***
+## a26993   2.164103 2.744631 5.431156   0.076353   -8.3784 < 2.2e-16 ***
+## a26994   2.197456 2.820860 5.516938   0.091396   -6.0608 1.354e-09 ***
+## a26995   2.328675 3.069486 5.676712   0.089167   -4.4205 9.848e-06 ***
+## a26996   2.568293 3.297345 5.710418   0.063524   -5.6743 1.392e-08 ***
+## a26997   2.610637 3.106320 5.253316   0.082588   -9.8992 < 2.2e-16 ***
+## a26998   2.257050 2.702555 5.252682   0.107952   -7.5792 3.476e-14 ***
+## a26999   2.269697 2.921286 5.585082   0.103890   -4.6760 2.925e-06 ***
+## a27000   2.287615 3.076943 5.721840   0.093060   -3.7506 0.0001764 ***
+## a27001   2.593318 3.282045 5.748672   0.074039   -4.3518 1.350e-05 ***
+## a27002   2.571294 3.081967 5.473587   0.089111   -6.7027 2.046e-11 ***
+## a27003   2.388313 2.982336 5.639768   0.079971   -5.3908 7.015e-08 ***
+## a27004   2.231190 2.892473 5.588673   0.102924   -4.6851 2.799e-06 ***
+## a27005   2.552190 3.331558 5.712673   0.075330   -4.7551 1.984e-06 ***
+## Expected 2.518899 2.517737 6.070875                                   
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -676,10 +676,11 @@ p <- p + geom_smooth(method="glm", size=1.5)
 p <- p + geom_point(size=3.5, aes(col=horizon)) 
 p <- p + theme_bw() 
 p <- p + facet_wrap(~treatment)
+p <- p + ggtitle("William's Lake (RPKM)")
 p
 ```
 
-![plot of chunk unnamed-chunk-29](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-29.png) 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-29-1.png) 
 
 ```r
 pdf(file = paste(figure_dir, "wl_delta_star_rpkm.pdf", sep="/"), width=9.832, height=4.399)
@@ -700,10 +701,11 @@ p <- p + geom_smooth(formula=y ~ x, method="glm", size=1.5)
 p <- p + geom_point(size=3.5, aes(col=horizon)) 
 p <- p + facet_wrap(~treatment) 
 p <- p + theme_bw()
+p <- p + ggtitle("William's Lake (RPKM)")
 p
 ```
 
-![plot of chunk unnamed-chunk-30](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-30.png) 
+![](./taxonomic_variance_notes_files/figure-html/unnamed-chunk-30-1.png) 
 
 ```r
 pdf(file = paste(figure_dir, "wl_delta_plus_rpkm.pdf", sep="/"), width=9.832, height=4.399)
@@ -715,6 +717,141 @@ dev.off()
 ## pdf 
 ##   2
 ```
+
+## Diversity by Pathway
+
+* Construct the Sample, Pathway, Measure, and Values table 
+     * Calculate diversity per pathway
+
+
+```r
+# cleans up summary results from taxondive
+construct_summary_matrix <- function(taxon_dive_summary, clean=TRUE) {
+  x <- data.frame(delta=taxon_dive_summary[,1],
+                 delta_star=taxon_dive_summary[,2],
+                 delta_plus=taxon_dive_summary[,3],
+                 delta_plus_sd=taxon_dive_summary[,4],
+                 delta_plus_z=taxon_dive_summary[,5],
+                 delta_plus_pr=taxon_dive_summary[,6])
+  # save expected values
+  delta_e <- x[nrow(x),1]
+  delta_star_e <- x[nrow(x),2]
+  delta_plus_e <- x[nrow(x),3]
+  
+  x$PWY_NAME = rownames(x)
+  if (clean) {
+    # removes NAs, NaN, Inf
+    x <- x[complete.cases(x),]
+    # must be positive 
+    positive_set <- (x[,1] >= 0 & x[,2] >= 0 & x[,3] >= 0)
+    x <- x[positive_set,]
+  }
+  
+  # bind results together
+  res <- list(df=x, delta_e=delta_e, delta_star_e=delta_star_e, delta_plus_e=delta_plus_e)
+  return(res)
+}
+```
+
+
+```r
+load(paste(temp_dir, "pathway_master_table.Rdata", sep="/"))
+# clean up names
+pathway_master_table$SAMPLE <- sub("-scaffolds", "", pathway_master_table$SAMPLE)
+pathway_master_table$SAMPLE <- sub("a", "A", pathway_master_table$SAMPLE)
+```
+```
+
+
+```r
+if("pathway_master_table.Rdata" %in% rdata_files) {
+  load(paste(temp_dir, "pathway_master_table.Rdata", sep="/"))
+} else {
+  pathway_master_table = NULL
+  for (pt_file in pwy_taxa_files) {
+    print(pt_file)
+    # load dataframe
+    df <- read.table(paste(pwy_taxa_dir, pt_file, sep="/"), header=TRUE, sep="\t",
+                    colClasses= c('character', 'character', 'character', 'character', 'character',
+                                 'numeric', 'numeric', 'numeric', 'character', 'character', 'numeric'), quote = "")
+    ## calculate diversity per pathway
+    
+    # summarize pathways by taxonomy abundance
+    res <- df %>% 
+        select(SAMPLE, PWY_NAME, PWY_COMMON_NAME, TAXONOMY, NUM_REACTIONS, NUM_COVERED_REACTIONS, ORF_COUNT, RPKM) %>%
+        group_by(SAMPLE, PWY_NAME, PWY_COMMON_NAME, TAXONOMY) %>%
+        filter( is.na(TAXONOMY) != TRUE) %>%
+        summarize( ORF_COUNT=max(ORF_COUNT), RPKM=sum(RPKM)  )
+    
+    # convert into dataframe for taxonomic calculation
+    res2 <- dcast(res, PWY_NAME ~ TAXONOMY, value.var='RPKM', sum)
+    rownames(res2) <- res2$PWY_NAME
+    res2 <- res2[-1]
+
+    # prepare taxonomic distance matrix
+    my_taxa_list <- unique(colnames(res2))
+    split_taxa <- sapply(my_taxa_list, strsplit, ";")
+    lengths <- sapply(split_taxa, length)
+    max_length <- max(lengths)
+    test_df <- create_taxa_df(my_taxa_list)
+    my_taxdis <- my_taxa2dist(test_df, check=FALSE, varstep=FALSE, wtd=TRUE)
+    
+    # calculate statistics
+    test <- taxondive(res2, my_taxdis)
+    summary_res <- summary(test)
+    
+    # clean up summary
+    test_list <- construct_summary_matrix(summary_res)
+
+    # create a data frame of sample, pathway, measure, value
+    res3 <- df %>% 
+        select(SAMPLE, PWY_NAME, PWY_COMMON_NAME, TAXONOMY, NUM_REACTIONS, NUM_COVERED_REACTIONS, ORF_COUNT, RPKM) %>%
+        group_by(SAMPLE, PWY_NAME, PWY_COMMON_NAME) %>%
+        filter( is.na(TAXONOMY) != TRUE) %>%
+        summarize( ORF_COUNT=max(ORF_COUNT), RPKM=sum(RPKM)  )
+
+    # bind new statistics to pathway
+    res4 <- merge(res3, test_list$df, by="PWY_NAME")
+    
+    # add to master table
+    pathway_master_table <- rbind(pathway_master_table, res4)
+  }
+  
+  # save when complete
+  save(pathway_master_table, file=paste(temp_dir, "pathway_master_table.Rdata", sep="/"))
+}
+
+# clean up names
+pathway_master_table$SAMPLE <- sub("-scaffolds", "", pathway_master_table$SAMPLE)
+pathway_master_table$SAMPLE <- sub("a", "A", pathway_master_table$SAMPLE)
+```
+
+* Now with the pathway master table constructed we can compute a few things
+
+
+
+
+
+
+```r
+# join by metadata
+names(wl_meta_df)[names(wl_meta_df) == 'Library'] <- "SAMPLE"
+pathway_master_table <- merge(pathway_master_table, wl_meta_df, "SAMPLE")
+
+res<-pathway_master_table %>%
+  select(SAMPLE, PWY_NAME, PWY_COMMON_NAME, ORF_COUNT, delta_star) %>%
+  group_by(SAMPLE, PWY_NAME) %>%
+  summarize(PWY_COMMON_NAME, min_delta_star = min(delta_star, na.rm = TRUE), ORF_COUNT) %>%
+  filter(ORF_COUNT > 10) %>%
+  filter(min_rank(min_delta_star) < 5)
+```
+
+# Future Ideas
+
+Ideas for future work.
+
+* Bootstrap p-values for delta_star (could be time-consuming)
+* Investigate measures in the context of the pathway
 
 # References
 

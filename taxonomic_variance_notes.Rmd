@@ -1,7 +1,8 @@
 ---
-title: "Taxonomic Diveristy and Distinctness Measures Applied to William's Lake Soil Metagenomes"
+title: Taxonomic Diveristy and Distinctness Measures Applied to William's Lake Soil
+  Metagenomes
 author: "Niels Hanson, Aria Hahn"
-date: "`r format(Sys.time(), '%B %d, %Y')`"
+date: "January 16, 2015"
 output:
   html_document:
     keep_md: yes
@@ -86,13 +87,13 @@ plot(dune.taxontree)
 * Plotting the matrix as a heatmap will show the structure in more detail
 
 ```{r fig.width=10, fig.height=10}
-pheatmap(taxdis, treeheight_row=150, treeheight_col=150)
+pheatmap(dune.taxdis, treeheight_row=150, treeheight_col=150)
 ```
 
 * Vegan's implementation of the taxonomic distance
 
 ```{r}
-mod <- taxondive(dune, taxdis)
+mod <- taxondive(dune, dune.taxdis)
 summary(mod)
 ```
 
@@ -115,7 +116,7 @@ plot(taxontree)
 ```{r fig.width=12, fig.height=12}
 pheatmap(taxon.test.matrix, treeheight_row=150, treeheight_col=150)
 pdf(file = paste(figure_dir, "WL_matrix_class_step.pdf", sep="/"), width=12, height=12)
-pheatmap(as.matrix(taxon.test.wtd), treeheight_row=150, treeheight_col=150)
+pheatmap(as.matrix(taxon.test.matrix), treeheight_row=150, treeheight_col=150)
 dev.off()
 ```
 
@@ -215,7 +216,11 @@ cd .../scripts/
 ./run_link_refseq_taxa_to_pathway.sh
 ```
 
-## Diversity of William's Lake
+# Analysis of William's Lake
+
+Here we utilize our implementation to analyze the William's Lake metagenomes by sample and pathway.
+
+## Diversity by Sample
 
 In order to calculate the disveristy measures, we need to create a distance matrix and a sample by taxa abundance matrix. To do this we will parse all the extract taxonomies and create a non-redunant list of taxonmies, and then use these to create the distance matrix for our samples using the WTD. From here we construct two sample by taxa abundance matricies; the first based on the raw ORF counts, and the second based on the RPKM normalized abundance measure. In both cases we show that the taxonomic diveristy and distinctness measures, delta* and delta+, show a strong positive correlation with depth in the Natural samples, while the treated samples show no clear or negative correlations.
 
@@ -312,7 +317,7 @@ if(!("sample_taxa_matrix_orfs.Rdata" %in% rdata_files)) {
 }
 ```
 
-* Calculate the diversity scores (ORFs)
+* Calculate the diversity scores (ORF Counts)
 
 ```{r}
 if(!("diversity_result_orfs.Rdata" %in% rdata_files)) { 
@@ -331,7 +336,7 @@ div_res_orfs
 wl_meta_df <- read.table(paste(wd, "data", "LTSP_WL_MappingandInfo_clean.csv", sep="/"), sep=",", header=TRUE)
 ```
 
-* Create summary Data Frame (ORFs)
+* Create summary Data Frame (ORF Counts)
 
 ```{r}
 div_res_orfs_matrix <- as.matrix(div_res_orfs)
@@ -353,17 +358,15 @@ master_df_orfs <- data.frame(delta=as.numeric(div_res_orfs_matrix[,1]),
            no3_ppm=as.numeric(div_res_orfs_matrix[,16]))
 ```
 
-* Depth (cm) by taxonomic diversity (ORFs)
+* Depth (cm) by taxonomic diversity (ORF Counts)
 
 ```{r fig.width=9.832, fig.height=4.399}
-library(ggplot2)
-library(reshape2)
-
 p <- ggplot(master_df_orfs, aes(x=depth, y=delta_star)) 
 p <- p + geom_smooth(method="glm", size=1.5) 
 p <- p + geom_point(size=3.5, aes(col=horizon)) 
 p <- p + theme_bw() 
-p <- p+ facet_wrap(~treatment)
+p <- p + facet_wrap(~treatment)
+p <- p + ggtitle("Williams Lake (ORF Counts)")
 p
 pdf(file = paste(figure_dir, "wl_delta_star_orfs.pdf", sep="/"), width=9.832, height=4.399)
 p
@@ -378,6 +381,7 @@ p <- p + geom_smooth(formula=y ~ x, method="glm", size=1.5)
 p <- p + geom_point(size=3.5, aes(col=horizon)) 
 p <- p + facet_wrap(~treatment) 
 p <- p + theme_bw()
+p <- p + ggtitle("Williams Lake (ORF Counts)")
 p
 pdf(file = paste(figure_dir, "wl_delta_plus_orfs.pdf", sep="/"), width=9.832, height=4.399)
 p
@@ -387,9 +391,6 @@ dev.off()
 * Construct the sample by taxa matrix (RPKM)
 
 ```{r}
-# construct new sample-taxa matrix with RPKM
-library(dplyr)
-
 div_res_rpkm_matrix <- NULL
 if(!("div_res_rpkm_matrix.Rdata" %in% rdata_files)) { 
   for (pt_file in pwy_taxa_files) {
@@ -423,7 +424,6 @@ if(!("div_res_rpkm_matrix.Rdata" %in% rdata_files)) {
 * RPKM diversity results
 
 ```{r}
-# calculate taxonomic diversity
 if(!("diversity_result_rpkm.Rdata" %in% rdata_files)) { 
   diversity_result_rpkm <- taxondive(div_res_rpkm_matrix, taxdis)
   save(diversity_result_rpkm, file=paste(temp_dir, "diversity_result_rpkm.Rdata", sep="/"))
@@ -465,6 +465,7 @@ p <- p + geom_smooth(method="glm", size=1.5)
 p <- p + geom_point(size=3.5, aes(col=horizon)) 
 p <- p + theme_bw() 
 p <- p + facet_wrap(~treatment)
+p <- p + ggtitle("William's Lake (RPKM)")
 p
 pdf(file = paste(figure_dir, "wl_delta_star_rpkm.pdf", sep="/"), width=9.832, height=4.399)
 p
@@ -478,11 +479,149 @@ p <- p + geom_smooth(formula=y ~ x, method="glm", size=1.5)
 p <- p + geom_point(size=3.5, aes(col=horizon)) 
 p <- p + facet_wrap(~treatment) 
 p <- p + theme_bw()
+p <- p + ggtitle("William's Lake (RPKM)")
 p
 pdf(file = paste(figure_dir, "wl_delta_plus_rpkm.pdf", sep="/"), width=9.832, height=4.399)
 p
 dev.off()
 ```
+
+## Diversity by Pathway
+
+* Construct the Sample, Pathway, Measure, and Values table 
+     * Calculate diversity per pathway
+
+```{r}
+# cleans up summary results from taxondive
+construct_summary_matrix <- function(taxon_dive_summary, clean=TRUE) {
+  x <- data.frame(delta=taxon_dive_summary[,1],
+                 delta_star=taxon_dive_summary[,2],
+                 delta_plus=taxon_dive_summary[,3],
+                 delta_plus_sd=taxon_dive_summary[,4],
+                 delta_plus_z=taxon_dive_summary[,5],
+                 delta_plus_pr=taxon_dive_summary[,6])
+  # save expected values
+  delta_e <- x[nrow(x),1]
+  delta_star_e <- x[nrow(x),2]
+  delta_plus_e <- x[nrow(x),3]
+  
+  x$PWY_NAME = rownames(x)
+  if (clean) {
+    # removes NAs, NaN, Inf
+    x <- x[complete.cases(x),]
+    # must be positive 
+    positive_set <- (x[,1] >= 0 & x[,2] >= 0 & x[,3] >= 0)
+    x <- x[positive_set,]
+  }
+  
+  # bind results together
+  res <- list(df=x, delta_e=delta_e, delta_star_e=delta_star_e, delta_plus_e=delta_plus_e)
+  return(res)
+}
+```
+
+```{r}
+load(paste(temp_dir, "pathway_master_table.Rdata", sep="/"))
+# clean up names
+pathway_master_table$SAMPLE <- sub("-scaffolds", "", pathway_master_table$SAMPLE)
+pathway_master_table$SAMPLE <- sub("a", "A", pathway_master_table$SAMPLE)
+```
+```
+
+```{r eval=FALSE}
+if("pathway_master_table.Rdata" %in% rdata_files) {
+  load(paste(temp_dir, "pathway_master_table.Rdata", sep="/"))
+} else {
+  pathway_master_table = NULL
+  for (pt_file in pwy_taxa_files) {
+    print(pt_file)
+    # load dataframe
+    df <- read.table(paste(pwy_taxa_dir, pt_file, sep="/"), header=TRUE, sep="\t",
+                    colClasses= c('character', 'character', 'character', 'character', 'character',
+                                 'numeric', 'numeric', 'numeric', 'character', 'character', 'numeric'), quote = "")
+    ## calculate diversity per pathway
+    
+    # summarize pathways by taxonomy abundance
+    res <- df %>% 
+        select(SAMPLE, PWY_NAME, PWY_COMMON_NAME, TAXONOMY, NUM_REACTIONS, NUM_COVERED_REACTIONS, ORF_COUNT, RPKM) %>%
+        group_by(SAMPLE, PWY_NAME, PWY_COMMON_NAME, TAXONOMY) %>%
+        filter( is.na(TAXONOMY) != TRUE) %>%
+        summarize( ORF_COUNT=max(ORF_COUNT), RPKM=sum(RPKM)  )
+    
+    # convert into dataframe for taxonomic calculation
+    res2 <- dcast(res, PWY_NAME ~ TAXONOMY, value.var='RPKM', sum)
+    rownames(res2) <- res2$PWY_NAME
+    res2 <- res2[-1]
+
+    # prepare taxonomic distance matrix
+    my_taxa_list <- unique(colnames(res2))
+    split_taxa <- sapply(my_taxa_list, strsplit, ";")
+    lengths <- sapply(split_taxa, length)
+    max_length <- max(lengths)
+    test_df <- create_taxa_df(my_taxa_list)
+    my_taxdis <- my_taxa2dist(test_df, check=FALSE, varstep=FALSE, wtd=TRUE)
+    
+    # calculate statistics
+    test <- taxondive(res2, my_taxdis)
+    summary_res <- summary(test)
+    
+    # clean up summary
+    test_list <- construct_summary_matrix(summary_res)
+
+    # create a data frame of sample, pathway, measure, value
+    res3 <- df %>% 
+        select(SAMPLE, PWY_NAME, PWY_COMMON_NAME, TAXONOMY, NUM_REACTIONS, NUM_COVERED_REACTIONS, ORF_COUNT, RPKM) %>%
+        group_by(SAMPLE, PWY_NAME, PWY_COMMON_NAME) %>%
+        filter( is.na(TAXONOMY) != TRUE) %>%
+        summarize( ORF_COUNT=max(ORF_COUNT), RPKM=sum(RPKM)  )
+
+    # bind new statistics to pathway
+    res4 <- merge(res3, test_list$df, by="PWY_NAME")
+    
+    # add to master table
+    pathway_master_table <- rbind(pathway_master_table, res4)
+  }
+  
+  # save when complete
+  save(pathway_master_table, file=paste(temp_dir, "pathway_master_table.Rdata", sep="/"))
+}
+
+# clean up names
+pathway_master_table$SAMPLE <- sub("-scaffolds", "", pathway_master_table$SAMPLE)
+pathway_master_table$SAMPLE <- sub("a", "A", pathway_master_table$SAMPLE)
+```
+
+* Now with the pathway master table constructed we can compute a few things
+
+```{r echo=FALSE, eval=FALSE}
+p <- ggplot(pathway_master_table, aes(x=ORF_COUNT, y=RPKM)) + geom_point() + facet_wrap(~SAMPLE)
+p
+```
+
+```{r echo=FALSE, eval=FALSE}
+p <- ggplot(pathway_master_table, aes(x=delta_star)) + geom_histogram() + facet_wrap(~SAMPLE)
+p
+```
+
+```{r eval=FALSE}
+# join by metadata
+names(wl_meta_df)[names(wl_meta_df) == 'Library'] <- "SAMPLE"
+pathway_master_table <- merge(pathway_master_table, wl_meta_df, "SAMPLE")
+
+res<-pathway_master_table %>%
+  select(SAMPLE, PWY_NAME, PWY_COMMON_NAME, ORF_COUNT, delta_star) %>%
+  group_by(SAMPLE, PWY_NAME) %>%
+  summarize(PWY_COMMON_NAME, min_delta_star = min(delta_star, na.rm = TRUE), ORF_COUNT) %>%
+  filter(ORF_COUNT > 10) %>%
+  filter(min_rank(min_delta_star) < 5)
+```
+
+# Future Ideas
+
+Ideas for future work.
+
+* Bootstrap p-values for delta_star (could be time-consuming)
+* Investigate measures in the context of the pathway
 
 # References
 

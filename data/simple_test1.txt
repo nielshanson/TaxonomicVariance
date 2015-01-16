@@ -1,4 +1,0 @@
-row.names	Order	Class	Phylum	Kingdom
-A;B;C;D	D	C	B	A
-A;B;E;-	unclassified	E	B	A
-A;F;-;-	unclassified	unclassified	F	A
