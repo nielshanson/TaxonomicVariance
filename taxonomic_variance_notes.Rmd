@@ -1,5 +1,5 @@
 ---
-title: Taxonomic Diveristy and Distinctness Measures Applied to William's Lake Soil
+title: Taxonomic Diversity and Distinctness Measures Applied to William's Lake Soil
   Metagenomes
 author: "Niels Hanson, Aria Hahn"
 date: "January 16, 2015"
@@ -20,9 +20,9 @@ setwd(wd)
 
 # Summary
 
-This document details the implementation of the Clarke's and Warwick's Diversity and Distinctness measures using the functional annotation to reference genomes [[@Warwick:1995vf, @Pienkowski:1998um, @Clarke:1999tx]]. However, the current implementation in the Vegan package does not take into account incomplete taxonomies [[@Oksanen:2007vs]], a common situation when using functional-genes to infer taxonomy via the Lowest Common Ancestor method in meta'omic samples [[@Huson:2007jl]]. Moreover, we would like to take advantage of properties and intution built into the Weighted Taxonomic Distance (WTD) [[@Hanson:2014bz]], which creates a hard separation between distances accross sub-trees. To accomplish this we implement the calculation of distances from partial taxonomies, allowing the efficient calcuation of WTD matricies. Moreover, we implement a number of analytical utility scripts to format taxonomic lineages the MetaPathways pipeline to create compatible distance and sample abundance matrix. Using the William's Lake (WL) soil metagenoems as a test case, we using that both taxonomic diversity measures, DeltaStar and DeltaPlus, show a positive correlation with increasing depth.
+This document details the implementation of the Clarke's and Warwick's Diversity and Distinctness measures using the functional annotation to reference genomes [[@Warwick:1995vf, @Pienkowski:1998um, @Clarke:1999tx]]. However, the current implementation in the Vegan package does not take into account incomplete taxonomies [[@Oksanen:2007vs]], a common situation when using functional-genes to infer taxonomy via the Lowest Common Ancestor method in meta'omic samples [[@Huson:2007jl]]. Moreover, we would like to take advantage of properties and intuition built into the Weighted Taxonomic Distance (WTD) [[@Hanson:2014bz]], which creates a hard separation between distances across sub-trees. To accomplish this we implement the calculation of distances from partial taxonomies, allowing the efficient calculation of WTD matrices. Moreover, we implement a number of analytical utility scripts to format taxonomic lineages the MetaPathways pipeline to create compatible distance and sample abundance matrix. Using the William's Lake (WL) soil metagenomes as a test case, we using that both taxonomic diversity measures, DeltaStar and DeltaPlus, show a positive correlation with increasing depth.
 
-This document shows the development of the method step-by-step. First it describes the original behavior of the implemented taxonomic diversity measures as implemented in the Vegan package, demonstrating their incompatability with partial taxonomcies. Next, we describe the implementation of a matrix form calculation of partial taxonoies, and through weighting demonstrate the implementation of the WTD. Next, we describe the development and use of utility scripts for use with MetaPathways output for creating taxonomies with respect to samples, pathways, and reactions, using presence/absence, ORF counts, or a normalized read-mapping measure, Reads per Kilobase per Million Mapped reads. Finally, we demonstrate the use of this implementation using 25 metagenomic samples from the William's Lake long term soil productivity (LTSP) site, and show that both diversity metrics reflect the increase in taxonomic diversity with increasing depth in the natural, undesturbed treatment, while a flat or negative trend is observed in the clear-cut treatment. 
+This document shows the development of the method step-by-step. First it describes the original behavior of the implemented taxonomic diversity measures as implemented in the Vegan package, demonstrating their incompatibility with partial taxonomies. Next, we describe the implementation of a matrix form calculation of partial taxonomies, and through weighting demonstrate the implementation of the WTD. Next, we describe the development and use of utility scripts for use with MetaPathways output for creating taxonomies with respect to samples, pathways, and reactions, using presence/absence, ORF counts, or a normalized read-mapping measure, Reads per Kilobase per Million Mapped reads. Finally, we demonstrate the use of this implementation using 25 metagenomic samples from the William's Lake long term soil productivity (LTSP) site, and show that both diversity metrics reflect the increase in taxonomic diversity with increasing depth in the natural, undisturbed treatment, while a flat or negative trend is observed in the clear-cut treatment. 
 
 ## Contents
 
@@ -40,11 +40,11 @@ This analysis consists of the following files and data products:
 
 * [annotations/](): Directory containing RefSeq annotations (`.LASTout.parsed.txt.gz`), RPKM values (`.orf_rpkm.txt.gz`), and long-style pathway tables (`.long.pwy.txt.gz`) for the WL LTSP samples.
 * [r_scripts/](): Directory of r functions.
-     * [my_taxa2dist.R](): Modifiction of the `taxa2dist()` to handle partial taxonomies and the WTD
+     * [my_taxa2dist.R](): Modification of the `taxa2dist()` to handle partial taxonomies and the WTD
 * [data/](): Processed data ready for analysis in R
      * [simple_test.txt](): Very basic taxonomy matrix with incomplete taxonomies for testing our implementation
      * [Phylodisttest.txt](): Matrix of partial taxonomies from the WL LTSP samples 
-     * [LTSP_WL_MappingandInfo_clean.csv](): Matrix of metadata, chemistry and experiemntal conditions for the WL samples
+     * [LTSP_WL_MappingandInfo_clean.csv](): Matrix of metadata, chemistry and experimental conditions for the WL samples
           * [pwy_taxa/](): long-style pathway tables with LCA taxonomies and RPKM values from the LTSP samples
      * [temp/](): Directory to store previous `.Rdata` files for fast processing. Remove contents of this directory to reboot the analysis and reprocess taxonomic distance matrix
 * [figures/](): Directory for pdf figures in the analysis.
@@ -199,7 +199,7 @@ summary(mod)
 
 ## Taxonomy and Pathways from MetaPathways
 
-* Slightly modified MetaPathways utility script `extract_pathway_table_from_pgdb.pl` that produces long-table output labeling pathways and reacations
+* Slightly modified MetaPathways utility script `extract_pathway_table_from_pgdb.pl` that produces long-table output labeling pathways and reactions
 * wrote `scripts/link_refseq_taxa_to_pwy.py` to combine output of pathways in metapathways with parsedblast and RPKM values
 
 ```
@@ -222,7 +222,7 @@ Here we utilize our implementation to analyze the William's Lake metagenomes by 
 
 ## Diversity by Sample
 
-In order to calculate the disveristy measures, we need to create a distance matrix and a sample by taxa abundance matrix. To do this we will parse all the extract taxonomies and create a non-redunant list of taxonmies, and then use these to create the distance matrix for our samples using the WTD. From here we construct two sample by taxa abundance matricies; the first based on the raw ORF counts, and the second based on the RPKM normalized abundance measure. In both cases we show that the taxonomic diveristy and distinctness measures, delta* and delta+, show a strong positive correlation with depth in the Natural samples, while the treated samples show no clear or negative correlations.
+In order to calculate the diversity measures, we need to create a distance matrix and a sample by taxa abundance matrix. To do this we will parse all the extract taxonomies and create a non-redundant list of taxonomies, and then use these to create the distance matrix for our samples using the WTD. From here we construct two sample by taxa abundance matrices; the first based on the raw ORF counts, and the second based on the RPKM normalized abundance measure. In both cases we show that the taxonomic diversity and distinctness measures, delta* and delta+, show a strong positive correlation with depth in the Natural samples, while the treated samples show no clear or negative correlations.
 
 * Various functions for creating properly formatted taxa matrix from partial taxonomies for `my_taxa2dist()`
 
@@ -273,6 +273,8 @@ if(!("nr_taxa_list.Rdata" %in% rdata_files)) {
 } else {
   load(paste(temp_dir, "nr_taxa_list.Rdata", sep="/"))
 }
+# remove NA class
+nr_taxa_list <- nr_taxa_list[!is.na(nr_taxa_list)]
 ```
 
 * Construct the WTD distance matrix from these annotations
